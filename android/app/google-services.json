@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "502965915123",
+    "project_id": "consumption-meter",
+    "storage_bucket": "consumption-meter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502965915123:android:f600342d56c10efa249686",
+        "android_client_info": {
+          "package_name": "com.example.consumption"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtB6axw2y_TqenlBvMotwchVUuMqw-ZaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
