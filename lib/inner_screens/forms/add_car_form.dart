@@ -9,7 +9,7 @@ import '../../helper/custom_app_bar.dart';
 import '../../helper/firebase.dart';
 import '../../helper/flutter_flow/flutter_flow_theme.dart';
 import '../../helper/flutter_flow/flutter_flow_widgets.dart';
-import '../add_car_inner_screen.dart';
+import '../my_entries.dart';
 import '../list_cars.dart';
 
 class AddCarForm extends StatefulWidget {

@@ -1,7 +1,8 @@
+import 'package:consumption/auth_screens/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PersistentBottomBarScaffold extends StatefulWidget {
-  /// pass the required items for the tabs and BottomNavigationBar
   final List<PersistentTabItem> items;
 
   const PersistentBottomBarScaffold({Key? key, required this.items})
@@ -16,29 +17,57 @@ class _PersistentBottomBarScaffoldState
     extends State<PersistentBottomBarScaffold> {
   int _selectedTab = 0;
 
+  bool canSwitchToMyEntries(int index) {
+    if (FirebaseAuth.instance.currentUser == null && index == 1) {
+      // Navigate to the LoginScreen if no user is logged in
+      Navigator.of(context).pushReplacementNamed(LoginScreen.id);
+      return false;
+    } else {
+      // Implement your condition here, return true if the user can switch to the tab
+      return true;
+    } // This is just a placeholder
+  }
+
+  void attemptSwitchTab(int index) {
+    if (index == 1 && !canSwitchToMyEntries(index)) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Login required"),
+          content: Text("You need to be logged in to access this feature."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedTab = index;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        /// Check if curent tab can be popped
         if (widget.items[_selectedTab].navigatorkey?.currentState?.canPop() ??
             false) {
           widget.items[_selectedTab].navigatorkey?.currentState?.pop();
           return false;
-        } else {
-          // if current tab can't be popped then use the root navigator
-          return true;
         }
+        return true;
       },
       child: Scaffold(
-        /// Using indexedStack to maintain the order of the tabs and the state of the
-        /// previously opened tab
         body: IndexedStack(
           index: _selectedTab,
           children: widget.items
               .map((page) => Navigator(
-                    /// Each tab is wrapped in a Navigator so that naigation in
-                    /// one tab can be independent of the other tabs
                     key: page.navigatorkey,
                     onGenerateInitialRoutes: (navigator, initialRoute) {
                       return [
@@ -48,24 +77,14 @@ class _PersistentBottomBarScaffoldState
                   ))
               .toList(),
         ),
-
-        /// Define the persistent bottom bar
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedTab,
           onTap: (index) {
-            /// Check if the tab that the user is pressing is currently selected
             if (index == _selectedTab) {
-              /// if you want to pop the current tab to its root then use
               widget.items[index].navigatorkey?.currentState
                   ?.popUntil((route) => route.isFirst);
-
-              /// if you want to pop the current tab to its last page
-              /// then use
-              // widget.items[index].navigatorkey?.currentState?.pop();
             } else {
-              setState(() {
-                _selectedTab = index;
-              });
+              attemptSwitchTab(index);
             }
           },
           items: widget.items

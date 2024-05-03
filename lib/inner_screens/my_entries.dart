@@ -1,8 +1,12 @@
+import 'package:consumption/auth_screens/login_screen.dart';
+import 'package:consumption/home_page.dart';
 import 'package:consumption/inner_screens/forms/add_car_form.dart';
+import 'package:consumption/inner_screens/list_cars.dart';
 import 'package:consumption/main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
-
+import '../auth_screens/home_screen.dart';
 import '../components/components.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_icon_button.dart';
@@ -34,16 +38,19 @@ class _MyEntriesState extends State<MyEntries> {
   @override
   void initState() {
     // TODO: implement initState
+    isLoggedIn = FirebaseAuth.instance.currentUser != null;
     super.initState();
-    _loadCarEntryData().then((value) {
-      setState(() {
-        //only load where auth.email matches username
-        ownCars = value
-            .where(
-                (element) => element.ownerUsername == auth.currentUser!.email)
-            .toList();
+    if (isLoggedIn) {
+      _loadCarEntryData().then((value) {
+        setState(() {
+          //only load where auth.email matches username
+          ownCars = value
+              .where(
+                  (element) => element.ownerUsername == auth.currentUser!.email)
+              .toList();
+        });
       });
-    });
+    }
   }
 
   @override
@@ -60,7 +67,25 @@ class _MyEntriesState extends State<MyEntries> {
                   fontSize: 22,
                 ),
           ),
-          actions: [],
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
+              color: isLoggedIn ? Colors.black : Colors.white,
+              onPressed: () {
+                if (isLoggedIn) {
+                  // Logout
+                  FirebaseAuth.instance.signOut();
+                  setState(() {
+                    Navigator.of(context).pushNamed(ListCarsScreen.id);
+                    isLoggedIn = false;
+                  });
+                } else {
+                  // Navigate to login screen
+                  Navigator.of(context).pushNamed(HomeScreen.id);
+                }
+              },
+            ),
+          ],
           centerTitle: false,
           elevation: 2,
         ),

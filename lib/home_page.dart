@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../helper/persistent_bottom_bar_scaffold.dart';
-import 'inner_screens/add_car_inner_screen.dart';
+import 'inner_screens/my_entries.dart';
 import 'inner_screens/list_cars.dart';
 import 'screens/add_car_screen.dart';
 

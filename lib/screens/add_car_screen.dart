@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:consumption/main.dart';
 
-import '../inner_screens/add_car_inner_screen.dart';
+import '../inner_screens/my_entries.dart';
 
 class AddCarScreen extends StatefulWidget {
   static const routeName = '/patient';

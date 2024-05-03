@@ -1,4 +1,9 @@
+import 'package:consumption/auth_screens/home_screen.dart';
+import 'package:consumption/auth_screens/login_screen.dart';
+import 'package:consumption/home_page.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_drop_down.dart';
@@ -8,6 +13,7 @@ import '../helper/flutter_flow/form_field_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../main.dart';
 import '../models/car_entry.dart';
 import '../models/home_page_model.dart';
 import 'forms/add_car_form.dart';
@@ -15,6 +21,7 @@ export '../models/home_page_model.dart';
 
 class ListCarsScreen extends StatefulWidget {
   const ListCarsScreen({Key? key}) : super(key: key);
+  static String id = 'list_screen';
 
   @override
   _ListCarsScreenState createState() => _ListCarsScreenState();
@@ -74,6 +81,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
 
   @override
   void initState() {
+    isLoggedIn = FirebaseAuth.instance.currentUser != null;
     super.initState();
     _model = createModel(context, () => ListCarsScreenModel());
     _loadCarEntryData().then((value) {
@@ -366,7 +374,23 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                   fontSize: 22,
                 ),
           ),
-          actions: [],
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
+              color: isLoggedIn ? Colors.black : Colors.white,
+              onPressed: () {
+                if (isLoggedIn) {
+                  // Logout
+                  FirebaseAuth.instance.signOut();
+                  setState(() {
+                    isLoggedIn = false;
+                  });
+                } else {
+                  Navigator.of(context).pushNamed(HomeScreen.id);
+                }
+              },
+            ),
+          ],
           centerTitle: false,
           elevation: 2,
         ),

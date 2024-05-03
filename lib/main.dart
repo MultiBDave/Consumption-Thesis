@@ -22,6 +22,8 @@ Color appForegroundColor = Colors.grey;
 Color appBackgroundColor = Colors.red.shade200;
 final db = FirebaseFirestore.instance;
 
+bool isLoggedIn = false;
+
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -38,15 +40,16 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(useMaterial3: true),
-      debugShowCheckedModeBanner: true,
-      initialRoute: HomeScreen.id,
+      initialRoute: HomePage.id,
       routes: {
         HomeScreen.id: (context) => const HomeScreen(),
         LoginScreen.id: (context) => const LoginScreen(),
         SignUpScreen.id: (context) => const SignUpScreen(),
         HomePage.id: (context) => HomePage(),
+        ListCarsScreen.id: (context) => ListCarsScreen(),
       },
     );
   }
