@@ -21,14 +21,42 @@ void updateCarEntry(CarEntry CarEntry, String documentID) {
     'location': CarEntry.location,
     'type': CarEntry.type,
     'drivenKm': CarEntry.drivenKm,
+    'drivenKmSincePurchase': CarEntry.drivenKmSincePurchase,
     'fuelSum': CarEntry.fuelSum,
   };
   documentReference.set(CarEntryData, SetOptions(merge: true));
 }
 
+Future<List<CarEntry>> getUserCars(String username) async {
+  List<CarEntry> userCars = [];
+  QuerySnapshot querySnapshot = await db
+      .collection('CarEntrys')
+      .where('ownerUsername', isEqualTo: username)
+      .get();
+  for (var doc in querySnapshot.docs) {
+    userCars.add(CarEntry.fuel(
+        id: doc['id'],
+        model: doc['model'],
+        make: doc['make'],
+        year: doc['year'],
+        color: doc['color'],
+        ownerUsername: doc['ownerUsername'],
+        location: doc['location'],
+        type: doc['type'],
+        drivenKm: doc['drivenKm'],
+        drivenKmSincePurchase: doc['drivenKmSincePurchase'] ?? 0,
+        fuelSum: doc['fuelSum']));
+  }
+  return userCars;
+}
+
 Future<CarEntry> getCarEntryFromDb(int id) async {
   String docID = await getDocumentID(id, 'CarEntrys');
   var snapshot = await db.collection('CarEntrys').doc(docID).get();
+  int drivenSincePurchase = 0;
+  if (snapshot.data()!.containsKey('drivenKmSincePurchase')) {
+    drivenSincePurchase = snapshot.data()!['drivenKmSincePurchase'];
+  }
   CarEntry carEntry = CarEntry.fuel(
     id: snapshot.data()!['id'],
     model: snapshot.data()!['model'],
@@ -39,6 +67,7 @@ Future<CarEntry> getCarEntryFromDb(int id) async {
     location: snapshot.data()!['location'],
     type: snapshot.data()!['type'],
     drivenKm: snapshot.data()!['drivenKm'],
+    drivenKmSincePurchase: drivenSincePurchase,
     fuelSum: snapshot.data()!['fuelSum'],
   );
   return carEntry;
@@ -60,6 +89,8 @@ void addCarEntryToDb(CarEntry CarEntry) {
     'location': CarEntry.location,
     'type': CarEntry.type,
     'drivenKm': CarEntry.drivenKm,
+    'drivenKmSincePurchase':
+        0, // 'drivenKmSincePurchase' is not used in 'CarEntry.fuel
     'fuelSum': CarEntry.fuelSum,
   };
   addDocumentToCollection('CarEntrys', CarEntryData);
@@ -84,7 +115,11 @@ Future<String> getDocumentID(int id, String collection) async {
 Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
   List<CarEntry> CarEntrys = [];
   QuerySnapshot querySnapshot = await db.collection('CarEntrys').get();
+  int drivenSincePurchase = 0;
   for (var doc in querySnapshot.docs) {
+    if (doc['drivenKmSincePurchase'] != null) {
+      drivenSincePurchase = doc['drivenKmSincePurchase'];
+    }
     CarEntrys.add(CarEntry.fuel(
         id: doc['id'],
         model: doc['model'],
@@ -95,6 +130,7 @@ Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
         location: doc['location'],
         type: doc['type'],
         drivenKm: doc['drivenKm'],
+        drivenKmSincePurchase: doc['drivenKmSincePurchase'] ?? 0,
         fuelSum: doc['fuelSum']));
   }
   return CarEntrys;

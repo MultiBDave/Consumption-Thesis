@@ -43,6 +43,8 @@ class _AddCarFormState extends State<AddCarForm> {
   String currentTypeTextFormFieldValue = '';
   String currentKmTextFormFieldValue = '';
 
+  String carConsumptionValue = '';
+
   bool passwordFieldVisibility = false;
 
   List<String> colorList = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
@@ -82,6 +84,7 @@ class _AddCarFormState extends State<AddCarForm> {
         locationController.text = widget.car.location;
         typeController.text = widget.car.type;
         kmController.text = widget.car.drivenKm.toString();
+        carConsumptionValue = widget.car.getConsumption();
       });
     }
   }
@@ -596,7 +599,7 @@ class _AddCarFormState extends State<AddCarForm> {
                           padding:
                               const EdgeInsetsDirectional.fromSTEB(0, 12, 0, 0),
                           child: Text(
-                            'Current fuel summary: ${widget.car.fuelSum} liters, consumption: ${widget.car.getConsumption()} liters/100km',
+                            'Current fuel summary: ${widget.car.fuelSum} liters, consumption: ${carConsumptionValue} liters/100km',
                             style: FlutterFlowTheme.of(context)
                                 .bodyText1
                                 .override(

@@ -39,6 +39,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: "btn3",
           onPressed: () {
             setState(() {
               //todo

@@ -178,6 +178,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         floatingActionButton: FloatingActionButton(
+          heroTag: "btn1",
           onPressed: () {
             showDialog(
               context: context,

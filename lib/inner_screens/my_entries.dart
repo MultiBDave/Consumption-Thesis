@@ -48,6 +48,9 @@ class _MyEntriesState extends State<MyEntries> {
               .where(
                   (element) => element.ownerUsername == auth.currentUser!.email)
               .toList();
+          for (var x in ownCars) {
+            x.refreshConsumption();
+          }
         });
       });
     }
@@ -93,7 +96,6 @@ class _MyEntriesState extends State<MyEntries> {
           itemCount: ownCars.length,
           itemBuilder: (BuildContext context, int index) {
             CarEntry car = ownCars[index];
-            ownCars[index].refreshConsumption();
             return Dismissible(
               key: ValueKey<int>(ownCars[index].id),
               child: Padding(
@@ -146,7 +148,7 @@ class _MyEntriesState extends State<MyEntries> {
                               alignment:
                                   const AlignmentDirectional(-1.00, 0.00),
                               child: Text(
-                                car.consumption,
+                                '${car.consumption} L/100km',
                                 style: FlutterFlowTheme.of(context).bodyMedium,
                               ),
                             ),
@@ -246,6 +248,9 @@ class _MyEntriesState extends State<MyEntries> {
                                                 ownCars[index].drivenKm =
                                                     currentDistanceValue;
                                                 ownCars[index]
+                                                        .drivenKmSincePurchase =
+                                                    currentDistanceValue;
+                                                ownCars[index]
                                                     .refreshConsumption();
                                                 Navigator.of(context).pop();
                                               });
@@ -314,6 +319,7 @@ class _MyEntriesState extends State<MyEntries> {
           },
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: "btn2",
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => AddCarForm(

@@ -37,6 +37,14 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+  void deleteAll() async {
+    var collection = FirebaseFirestore.instance.collection('CarEntrys');
+    var snapshots = await collection.get();
+    for (var doc in snapshots.docs) {
+      await doc.reference.delete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
