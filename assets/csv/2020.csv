@@ -1,0 +1,376 @@
+year,make,model
+2020,Acura,ILX
+2020,Acura,MDX
+2020,Acura,MDX Sport Hybrid
+2020,Acura,NSX
+2020,Acura,RDX
+2020,Acura,RLX
+2020,Acura,RLX Sport Hybrid
+2020,Acura,TLX
+2020,Alfa Romeo,4C Spider
+2020,Alfa Romeo,Giulia
+2020,Alfa Romeo,Stelvio
+2020,Audi,A3
+2020,Audi,A4
+2020,Audi,A5
+2020,Audi,A6
+2020,Audi,A6 allroad
+2020,Audi,A7
+2020,Audi,Q3
+2020,Audi,Q5
+2020,Audi,Q7
+2020,Audi,Q8
+2020,Audi,R8
+2020,Audi,S4
+2020,Audi,S8
+2020,Audi,SQ5
+2020,Audi,TT
+2020,BMW,2 Series
+2020,BMW,3 Series
+2020,BMW,4 Series
+2020,BMW,5 Series
+2020,BMW,7 Series
+2020,BMW,8 Series
+2020,BMW,M2
+2020,BMW,X1
+2020,BMW,X2
+2020,BMW,X3
+2020,BMW,X3 M
+2020,BMW,X4
+2020,BMW,X5
+2020,BMW,X6
+2020,BMW,X7
+2020,BMW,Z4
+2020,Buick,Enclave
+2020,Buick,Encore
+2020,Buick,Encore GX
+2020,Buick,Envision
+2020,Buick,Regal Sportback
+2020,Buick,Regal TourX
+2020,Cadillac,CT4
+2020,Cadillac,CT5
+2020,Cadillac,CT6
+2020,Cadillac,CT6-V
+2020,Cadillac,Escalade
+2020,Cadillac,Escalade ESV
+2020,Cadillac,XT4
+2020,Cadillac,XT5
+2020,Cadillac,XT6
+2020,Chevrolet,Blazer
+2020,Chevrolet,Bolt EV
+2020,Chevrolet,Camaro
+2020,Chevrolet,Colorado Crew Cab
+2020,Chevrolet,Colorado Extended Cab
+2020,Chevrolet,Corvette
+2020,Chevrolet,Equinox
+2020,Chevrolet,Express 2500 Cargo
+2020,Chevrolet,Express 3500 Cargo
+2020,Chevrolet,Impala
+2020,Chevrolet,Malibu
+2020,Chevrolet,Silverado 1500 Crew Cab
+2020,Chevrolet,Silverado 1500 Double Cab
+2020,Chevrolet,Silverado 1500 Regular Cab
+2020,Chevrolet,Silverado 2500 HD Crew Cab
+2020,Chevrolet,Silverado 2500 HD Double Cab
+2020,Chevrolet,Silverado 3500 HD Crew Cab
+2020,Chevrolet,Sonic
+2020,Chevrolet,Spark
+2020,Chevrolet,Suburban
+2020,Chevrolet,Tahoe
+2020,Chevrolet,Traverse
+2020,Chevrolet,Trax
+2020,Chrysler,300
+2020,Chrysler,Pacifica
+2020,Chrysler,Pacifica Hybrid
+2020,Chrysler,Voyager
+2020,Dodge,Challenger
+2020,Dodge,Charger
+2020,Dodge,Durango
+2020,Dodge,Grand Caravan Passenger
+2020,Dodge,Journey
+2020,FIAT,124 Spider
+2020,FIAT,500L
+2020,FIAT,500X
+2020,Ford,EcoSport
+2020,Ford,Edge
+2020,Ford,Escape
+2020,Ford,Expedition
+2020,Ford,Expedition MAX
+2020,Ford,Explorer
+2020,Ford,F150 Regular Cab
+2020,Ford,F150 Super Cab
+2020,Ford,F150 SuperCrew Cab
+2020,Ford,F250 Super Duty Crew Cab
+2020,Ford,F250 Super Duty Regular Cab
+2020,Ford,F250 Super Duty Super Cab
+2020,Ford,F350 Super Duty Crew Cab
+2020,Ford,F350 Super Duty Super Cab
+2020,Ford,F450 Super Duty Crew Cab
+2020,Ford,Fusion
+2020,Ford,Fusion Plug-in Hybrid
+2020,Ford,Mustang
+2020,Ford,Ranger SuperCab
+2020,Ford,Ranger SuperCrew
+2020,Ford,Transit 250 Cargo Van
+2020,Ford,Transit 350 Passenger Van
+2020,Ford,Transit Connect Cargo Van
+2020,Ford,Transit Connect Passenger Wagon
+2020,Freightliner,Sprinter 1500 Cargo
+2020,Freightliner,Sprinter 1500 Passenger
+2020,Freightliner,Sprinter 2500 Cargo
+2020,Freightliner,Sprinter 2500 Crew
+2020,Freightliner,Sprinter 2500 Passenger
+2020,Freightliner,Sprinter 3500 Cargo
+2020,Freightliner,Sprinter 3500 Crew
+2020,Freightliner,Sprinter 3500 XD Crew
+2020,Freightliner,Sprinter 3500XD Cargo
+2020,Freightliner,Sprinter 4500 Cargo
+2020,Freightliner,Sprinter 4500 Crew
+2020,Genesis,G70
+2020,Genesis,G80
+2020,Genesis,G90
+2020,GMC,Acadia
+2020,GMC,Canyon Crew Cab
+2020,GMC,Sierra 1500 Crew Cab
+2020,GMC,Sierra 1500 Double Cab
+2020,GMC,Sierra 1500 Regular Cab
+2020,GMC,Sierra 2500 HD Crew Cab
+2020,GMC,Sierra 3500 HD Crew Cab
+2020,GMC,Terrain
+2020,GMC,Yukon
+2020,GMC,Yukon XL
+2020,Honda,Accord
+2020,Honda,Accord Hybrid
+2020,Honda,Civic
+2020,Honda,Civic Type R
+2020,Honda,Clarity Fuel Cell
+2020,Honda,Clarity Plug-in Hybrid
+2020,Honda,CR-V
+2020,Honda,CR-V Hybrid
+2020,Honda,Fit
+2020,Honda,HR-V
+2020,Honda,Insight
+2020,Honda,Odyssey
+2020,Honda,Passport
+2020,Honda,Pilot
+2020,Honda,Ridgeline
+2020,Hyundai,Accent
+2020,Hyundai,Elantra
+2020,Hyundai,Elantra GT
+2020,Hyundai,Ioniq Electric
+2020,Hyundai,Ioniq Hybrid
+2020,Hyundai,Ioniq Plug-in Hybrid
+2020,Hyundai,Kona
+2020,Hyundai,Kona Electric
+2020,Hyundai,NEXO
+2020,Hyundai,Palisade
+2020,Hyundai,Santa Fe
+2020,Hyundai,Sonata
+2020,Hyundai,Sonata Hybrid
+2020,Hyundai,Tucson
+2020,Hyundai,Veloster
+2020,Hyundai,Venue
+2020,INFINITI,Q50
+2020,INFINITI,Q60
+2020,INFINITI,QX50
+2020,INFINITI,QX60
+2020,INFINITI,QX80
+2020,Jaguar,E-PACE
+2020,Jaguar,F-PACE
+2020,Jaguar,F-TYPE
+2020,Jaguar,I-PACE
+2020,Jaguar,XE
+2020,Jaguar,XF
+2020,Jeep,Cherokee
+2020,Jeep,Compass
+2020,Jeep,Gladiator
+2020,Jeep,Grand Cherokee
+2020,Jeep,Renegade
+2020,Jeep,Wrangler
+2020,Jeep,Wrangler Unlimited
+2020,Kia,Cadenza
+2020,Kia,Forte
+2020,Kia,K900
+2020,Kia,Niro
+2020,Kia,Niro EV
+2020,Kia,Niro Plug-in Hybrid
+2020,Kia,Optima
+2020,Kia,Optima Hybrid
+2020,Kia,Optima Plug-in Hybrid
+2020,Kia,Rio
+2020,Kia,Sedona
+2020,Kia,Sorento
+2020,Kia,Soul
+2020,Kia,Sportage
+2020,Kia,Stinger
+2020,Kia,Telluride
+2020,Land Rover,Defender 110
+2020,Land Rover,Defender 90
+2020,Land Rover,Discovery
+2020,Land Rover,Discovery Sport
+2020,Land Rover,Range Rover
+2020,Land Rover,Range Rover Evoque
+2020,Land Rover,Range Rover Sport
+2020,Land Rover,Range Rover Velar
+2020,Lexus,ES
+2020,Lexus,GS
+2020,Lexus,GX
+2020,Lexus,IS
+2020,Lexus,LC
+2020,Lexus,LS
+2020,Lexus,LX
+2020,Lexus,NX
+2020,Lexus,RC
+2020,Lexus,RX
+2020,Lexus,UX
+2020,Lincoln,Aviator
+2020,Lincoln,Continental
+2020,Lincoln,Corsair
+2020,Lincoln,MKZ
+2020,Lincoln,Nautilus
+2020,Lincoln,Navigator
+2020,Lincoln,Navigator L
+2020,MAZDA,CX-3
+2020,MAZDA,CX-30
+2020,MAZDA,CX-5
+2020,MAZDA,CX-9
+2020,MAZDA,MAZDA3
+2020,MAZDA,MAZDA6
+2020,MAZDA,MX-5 Miata
+2020,MAZDA,MX-5 Miata RF
+2020,Mercedes-Benz,A-Class
+2020,Mercedes-Benz,C-Class
+2020,Mercedes-Benz,CLA
+2020,Mercedes-Benz,CLS
+2020,Mercedes-Benz,E-Class
+2020,Mercedes-Benz,G-Class
+2020,Mercedes-Benz,GLA
+2020,Mercedes-Benz,GLB
+2020,Mercedes-Benz,GLC
+2020,Mercedes-Benz,GLE
+2020,Mercedes-Benz,GLS
+2020,Mercedes-Benz,Mercedes-AMG A-Class
+2020,Mercedes-Benz,Mercedes-AMG C-Class
+2020,Mercedes-Benz,Mercedes-AMG CLS
+2020,Mercedes-Benz,Mercedes-AMG GLC
+2020,Mercedes-Benz,Mercedes-AMG GLC Coupe
+2020,Mercedes-Benz,Metris WORKER Cargo
+2020,Mercedes-Benz,Metris WORKER Passenger
+2020,Mercedes-Benz,S-Class
+2020,Mercedes-Benz,SLC
+2020,Mercedes-Benz,Sprinter 1500 Cargo
+2020,Mercedes-Benz,Sprinter 1500 Passenger
+2020,Mercedes-Benz,Sprinter 2500 Cargo
+2020,Mercedes-Benz,Sprinter 2500 Crew
+2020,Mercedes-Benz,Sprinter 2500 Passenger
+2020,Mercedes-Benz,Sprinter 3500 Cargo
+2020,Mercedes-Benz,Sprinter 3500 Crew
+2020,Mercedes-Benz,Sprinter 3500 XD Cargo
+2020,Mercedes-Benz,Sprinter 3500 XD Crew
+2020,Mercedes-Benz,Sprinter 4500 Cargo
+2020,Mercedes-Benz,Sprinter 4500 Crew
+2020,MINI,Clubman
+2020,MINI,Countryman
+2020,MINI,Hardtop 2 Door
+2020,MINI,Hardtop 4 Door
+2020,Mitsubishi,Eclipse Cross
+2020,Mitsubishi,Mirage
+2020,Mitsubishi,Mirage G4
+2020,Mitsubishi,Outlander
+2020,Mitsubishi,Outlander PHEV
+2020,Mitsubishi,Outlander Sport
+2020,Nissan,370Z
+2020,Nissan,Altima
+2020,Nissan,Armada
+2020,Nissan,Frontier Crew Cab
+2020,Nissan,Frontier King Cab
+2020,Nissan,GT-R
+2020,Nissan,Kicks
+2020,Nissan,LEAF
+2020,Nissan,Maxima
+2020,Nissan,Murano
+2020,Nissan,NV1500 Cargo
+2020,Nissan,NV200
+2020,Nissan,NV2500 HD Cargo
+2020,Nissan,NV3500 HD Cargo
+2020,Nissan,NV3500 HD Passenger
+2020,Nissan,Pathfinder
+2020,Nissan,Rogue
+2020,Nissan,Rogue Sport
+2020,Nissan,Sentra
+2020,Nissan,Titan Crew Cab
+2020,Nissan,Titan King Cab
+2020,Nissan,TITAN XD Crew Cab
+2020,Nissan,Versa
+2020,Porsche,718 Boxster
+2020,Porsche,718 Cayman
+2020,Porsche,718 Spyder
+2020,Porsche,911
+2020,Porsche,Cayenne
+2020,Porsche,Cayenne Coupe
+2020,Porsche,Macan
+2020,Porsche,Panamera
+2020,Porsche,Taycan
+2020,Ram,1500 Classic Crew Cab
+2020,Ram,1500 Classic Quad Cab
+2020,Ram,1500 Crew Cab
+2020,Ram,1500 Quad Cab
+2020,Ram,2500 Crew Cab
+2020,Ram,3500 Crew Cab
+2020,Ram,ProMaster Cargo Van
+2020,Ram,ProMaster City
+2020,Subaru,Ascent
+2020,Subaru,BRZ
+2020,Subaru,Crosstrek
+2020,Subaru,Forester
+2020,Subaru,Impreza
+2020,Subaru,Legacy
+2020,Subaru,Outback
+2020,Subaru,WRX
+2020,Tesla,Model 3
+2020,Tesla,Model S
+2020,Tesla,Model X
+2020,Tesla,Model Y
+2020,Toyota,4Runner
+2020,Toyota,86
+2020,Toyota,Avalon
+2020,Toyota,Avalon Hybrid
+2020,Toyota,Camry
+2020,Toyota,Camry Hybrid
+2020,Toyota,C-HR
+2020,Toyota,Corolla
+2020,Toyota,Corolla Hatchback
+2020,Toyota,Corolla Hybrid
+2020,Toyota,GR Supra
+2020,Toyota,Highlander
+2020,Toyota,Highlander Hybrid
+2020,Toyota,Land Cruiser
+2020,Toyota,Mirai
+2020,Toyota,Prius
+2020,Toyota,Prius Prime
+2020,Toyota,RAV4
+2020,Toyota,RAV4 Hybrid
+2020,Toyota,Sequoia
+2020,Toyota,Sienna
+2020,Toyota,Tacoma Access Cab
+2020,Toyota,Tacoma Double Cab
+2020,Toyota,Tundra CrewMax
+2020,Toyota,Tundra Double Cab
+2020,Toyota,Yaris
+2020,Toyota,Yaris Hatchback
+2020,Volkswagen,Arteon
+2020,Volkswagen,Atlas
+2020,Volkswagen,Atlas Cross Sport
+2020,Volkswagen,Golf
+2020,Volkswagen,Golf GTI
+2020,Volkswagen,Jetta
+2020,Volkswagen,Jetta GLI
+2020,Volkswagen,Passat
+2020,Volkswagen,Tiguan
+2020,Volvo,S60
+2020,Volvo,S90
+2020,Volvo,V60
+2020,Volvo,V90
+2020,Volvo,XC40
+2020,Volvo,XC60
+2020,Volvo,XC90

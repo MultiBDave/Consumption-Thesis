@@ -15,17 +15,22 @@ import '../models/car_entry.dart';
 
 enum Operation { modify, add }
 
+enum KmType { currentKm, drivenKm }
+
 class MyEntries extends StatefulWidget {
   @override
   _MyEntriesState createState() => _MyEntriesState();
 }
 
 class _MyEntriesState extends State<MyEntries> {
-  int currentFuelValue = 0;
+  int currentFuelAmount = 0;
   int currentDistanceValue = 0;
+  double currentFuelUnitPrice = 0.0;
   TextEditingController fuelController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
   List<CarEntry> ownCars = [];
+  KmType kmType = KmType.currentKm;
 
   Future<List<CarEntry>> _loadCarEntryData() async {
     // Load the data asynchronously
@@ -99,7 +104,7 @@ class _MyEntriesState extends State<MyEntries> {
             return Dismissible(
               key: ValueKey<int>(ownCars[index].id),
               child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -148,14 +153,15 @@ class _MyEntriesState extends State<MyEntries> {
                               alignment:
                                   const AlignmentDirectional(-1.00, 0.00),
                               child: Text(
-                                '${car.consumption} L/100km',
+                                '${car.consumption.toStringAsFixed(2)} L/100km',
                                 style: FlutterFlowTheme.of(context).bodyMedium,
                               ),
                             ),
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 15, 0),
+                          padding:
+                              const EdgeInsetsDirectional.fromSTEB(0, 0, 15, 0),
                           child: FlutterFlowIconButton(
                             borderRadius: 10,
                             borderWidth: 1,
@@ -167,98 +173,149 @@ class _MyEntriesState extends State<MyEntries> {
                             ),
                             onPressed: () {
                               showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text('Add fuel'),
-                                      content: Container(
-                                        height: 200,
-                                        child: Row(
-                                          children: [
-                                            const Text('Fuel amount: '),
-                                            Expanded(
-                                              child: TextField(
-                                                controller: fuelController,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (String newValue) {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text);
-                                                },
-                                                onTapOutside: (newValue) {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text);
-                                                },
-                                                onSubmitted: (value) => {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text)
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        hintText: 'Amount'),
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text('Add Fuel',
+                                        style: TextStyle(
+                                            color: Colors.blueAccent)),
+                                    content: SingleChildScrollView(
+                                      child: ListBody(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: TextFormField(
+                                              controller: fuelController,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Fuel amount:',
+                                                border: OutlineInputBorder(),
+                                                hintText: 'Enter amount',
                                               ),
+                                              onChanged: (value) {
+                                                currentFuelAmount =
+                                                    int.tryParse(value) ?? 0;
+                                              },
                                             ),
-                                            const Text('Current km in car:'),
-                                            Expanded(
-                                              child: TextField(
-                                                controller: distanceController,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (String newValue) {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text);
-                                                },
-                                                onTapOutside: (newValue) {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text);
-                                                },
-                                                onSubmitted: (value) => {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text)
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        hintText: 'Amount'),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child:
+                                                DropdownButtonFormField<String>(
+                                              decoration: const InputDecoration(
+                                                labelText: 'Select Km Type',
+                                                border: OutlineInputBorder(),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        vertical: 10.0,
+                                                        horizontal: 10.0),
                                               ),
+                                              value: 'currentKm',
+                                              onChanged: (String? newValue) {},
+                                              items: <DropdownMenuItem<String>>[
+                                                DropdownMenuItem<String>(
+                                                  onTap: () {
+                                                    kmType = KmType.currentKm;
+                                                  },
+                                                  value: 'currentKm',
+                                                  child: const Text(
+                                                      'Current km in car'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  onTap: () {
+                                                    kmType = KmType.drivenKm;
+                                                  },
+                                                  value: 'drivenKm',
+                                                  child: const Text(
+                                                      'Driven km since last'),
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: TextFormField(
+                                              controller: distanceController,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Enter Kilometers:',
+                                                border: OutlineInputBorder(),
+                                                hintText: 'Enter kilometers',
+                                              ),
+                                              onChanged: (value) {
+                                                currentDistanceValue =
+                                                    int.tryParse(value) ?? 0;
+                                              },
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: TextFormField(
+                                              controller: priceController,
+                                              keyboardType: const TextInputType
+                                                  .numberWithOptions(
+                                                  decimal: true),
+                                              decoration: const InputDecoration(
+                                                labelText: 'Price per unit:',
+                                                border: OutlineInputBorder(),
+                                                hintText: 'Enter price',
+                                              ),
+                                              onChanged: (value) {
+                                                currentFuelUnitPrice =
+                                                    double.tryParse(value) ??
+                                                        0.0;
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text('Cancel')),
-                                        TextButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                ownCars[index].fuelSum +=
-                                                    currentFuelValue;
-                                                ownCars[index].drivenKm =
-                                                    currentDistanceValue;
-                                                ownCars[index]
-                                                        .drivenKmSincePurchase =
-                                                    currentDistanceValue;
-                                                ownCars[index]
-                                                    .refreshConsumption();
-                                                Navigator.of(context).pop();
-                                              });
-                                            },
-                                            child: const Text('Save')),
-                                      ],
-                                    );
-                                  });
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel',
+                                            style:
+                                                TextStyle(color: Colors.red)),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            ownCars[index].fuelSum +=
+                                                currentFuelAmount;
+                                            if (kmType == KmType.currentKm) {
+                                              ownCars[index]
+                                                      .drivenKmSincePurchase +=
+                                                  currentDistanceValue -
+                                                      ownCars[index].drivenKm;
+                                              ownCars[index].drivenKm =
+                                                  currentDistanceValue;
+                                            } else {
+                                              ownCars[index]
+                                                      .drivenKmSincePurchase +=
+                                                  currentDistanceValue;
+                                              ownCars[index].drivenKm +=
+                                                  currentDistanceValue;
+                                            }
+                                            ownCars[index].moneySpentOnFuel +=
+                                                currentFuelUnitPrice *
+                                                    currentFuelAmount;
+                                            ownCars[index].refreshConsumption();
+                                            modifyCarEntryInDb(ownCars[index]);
+                                            Navigator.of(context).pop();
+                                          });
+                                        },
+                                        child: const Text('Save',
+                                            style:
+                                                TextStyle(color: Colors.green)),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             },
                           ),
                         ),

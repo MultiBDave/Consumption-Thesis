@@ -23,6 +23,8 @@ void updateCarEntry(CarEntry CarEntry, String documentID) {
     'drivenKm': CarEntry.drivenKm,
     'drivenKmSincePurchase': CarEntry.drivenKmSincePurchase,
     'fuelSum': CarEntry.fuelSum,
+    'consumption': CarEntry.consumption,
+    'moneySpentOnFuel': CarEntry.moneySpentOnFuel
   };
   documentReference.set(CarEntryData, SetOptions(merge: true));
 }
@@ -45,7 +47,9 @@ Future<List<CarEntry>> getUserCars(String username) async {
         type: doc['type'],
         drivenKm: doc['drivenKm'],
         drivenKmSincePurchase: doc['drivenKmSincePurchase'] ?? 0,
-        fuelSum: doc['fuelSum']));
+        fuelSum: doc['fuelSum'],
+        consumption: doc['consumption'],
+        moneySpentOnFuel: doc['moneySpentOnFuel'] ?? 0.0));
   }
   return userCars;
 }
@@ -69,6 +73,8 @@ Future<CarEntry> getCarEntryFromDb(int id) async {
     drivenKm: snapshot.data()!['drivenKm'],
     drivenKmSincePurchase: drivenSincePurchase,
     fuelSum: snapshot.data()!['fuelSum'],
+    consumption: snapshot.data()!['consumption'],
+    moneySpentOnFuel: snapshot.data()!['moneySpentOnFuel'],
   );
   return carEntry;
 }
@@ -92,6 +98,8 @@ void addCarEntryToDb(CarEntry CarEntry) {
     'drivenKmSincePurchase':
         0, // 'drivenKmSincePurchase' is not used in 'CarEntry.fuel
     'fuelSum': CarEntry.fuelSum,
+    'consumption': 0.0,
+    'moneySpentOnFuel': 0.0
   };
   addDocumentToCollection('CarEntrys', CarEntryData);
 }
@@ -131,7 +139,9 @@ Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
         type: doc['type'],
         drivenKm: doc['drivenKm'],
         drivenKmSincePurchase: doc['drivenKmSincePurchase'] ?? 0,
-        fuelSum: doc['fuelSum']));
+        fuelSum: doc['fuelSum'],
+        consumption: doc['consumption'],
+        moneySpentOnFuel: doc['moneySpentOnFuel'] ?? 0.0));
   }
   return CarEntrys;
 }

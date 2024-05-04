@@ -12,7 +12,8 @@ class CarEntry {
   int drivenKm;
   int drivenKmSincePurchase = 0;
   int fuelSum = 0;
-  String consumption = "";
+  double consumption = 0.0;
+  double moneySpentOnFuel = 0.0;
 
   CarEntry(
       {required this.id,
@@ -24,31 +25,27 @@ class CarEntry {
       required this.location,
       required this.type,
       required this.drivenKm,
-      required this.drivenKmSincePurchase});
+      required this.drivenKmSincePurchase,
+      required this.consumption,
+      required this.moneySpentOnFuel});
 
-  CarEntry.fuel({
-    required this.id,
-    required this.make,
-    required this.model,
-    required this.year,
-    required this.color,
-    required this.ownerUsername,
-    required this.location,
-    required this.type,
-    required this.drivenKm,
-    required this.drivenKmSincePurchase,
-    required this.fuelSum,
-  });
-
-  String getConsumption() {
-    print(consumption);
-    return (fuelSum / drivenKmSincePurchase * 100).toStringAsFixed(2);
-  }
+  CarEntry.fuel(
+      {required this.id,
+      required this.make,
+      required this.model,
+      required this.year,
+      required this.color,
+      required this.ownerUsername,
+      required this.location,
+      required this.type,
+      required this.drivenKm,
+      required this.drivenKmSincePurchase,
+      required this.fuelSum,
+      required this.consumption,
+      required this.moneySpentOnFuel});
 
   void refreshConsumption() {
-    consumption = getConsumption();
-    print(consumption);
-    modifyCarEntryInDb(this);
+    consumption = (fuelSum / drivenKmSincePurchase * 100);
   }
 
   CarEntry.empty()

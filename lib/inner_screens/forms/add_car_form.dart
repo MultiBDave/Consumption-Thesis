@@ -1,4 +1,5 @@
 import 'package:consumption/components/components.dart';
+import 'package:consumption/helper/csv_handler.dart';
 import 'package:consumption/models/car_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:consumption/main.dart';
@@ -47,25 +48,33 @@ class _AddCarFormState extends State<AddCarForm> {
 
   bool passwordFieldVisibility = false;
 
+  String? selectedMake;
+  List<String> availableModels = [];
+  String? selectedModel;
+
   List<String> colorList = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
-  List<String> carList = [
-    'Wagon',
-    'Sedan',
-    'Hatchback',
-    'SUV',
-    'Coupe',
-    'Convertible',
-    'Van',
-    'Pickup',
-    'Minivan',
-    'Bus',
-    'Truck',
-    'Motorcycle',
-    'Other'
-  ];
+  // List<String> carTypeList = [
+  //   'Wagon',
+  //   'Sedan',
+  //   'Hatchback',
+  //   'SUV',
+  //   'Coupe',
+  //   'Convertible',
+  //   'Van',
+  //   'Pickup',
+  //   'Minivan',
+  //   'Bus',
+  //   'Truck',
+  //   'Motorcycle',
+  //   'Other'
+  // ];
 
   @override
   void initState() {
+    loadCsvData().then((_) {
+      setState(() {});
+    });
+
     super.initState();
     makeController = TextEditingController();
     modelController = TextEditingController();
@@ -84,7 +93,7 @@ class _AddCarFormState extends State<AddCarForm> {
         locationController.text = widget.car.location;
         typeController.text = widget.car.type;
         kmController.text = widget.car.drivenKm.toString();
-        carConsumptionValue = widget.car.getConsumption();
+        carConsumptionValue = widget.car.consumption.toStringAsFixed(2);
       });
     }
   }
@@ -136,10 +145,23 @@ class _AddCarFormState extends State<AddCarForm> {
                                 ),
                           ),
                         ),
-                        TextFormField(
-                          controller: makeController,
-                          autofocus: true,
-                          obscureText: false,
+                        DropdownButtonFormField<String>(
+                          value: selectedMake,
+                          onChanged: (String? newMake) {
+                            setState(() {
+                              selectedMake = newMake;
+                              widget.car.make = newMake!;
+                              availableModels = carData[selectedMake] ?? [];
+                              selectedModel = null; // Reset selected model
+                            });
+                          },
+                          items: carData.keys
+                              .map<DropdownMenuItem<String>>((String make) {
+                            return DropdownMenuItem<String>(
+                              value: make,
+                              child: Text(make),
+                            );
+                          }).toList(),
                           decoration: InputDecoration(
                             labelText: 'Make',
                             labelStyle:
@@ -174,36 +196,22 @@ class _AddCarFormState extends State<AddCarForm> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          style: FlutterFlowTheme.of(context).bodyMedium,
-                          onChanged: (String newValue) {
-                            setState(() {
-                              currentMakeTextFormFieldValue = newValue;
-                            });
-                          },
-                          onTapOutside: (newValue) {
-                            saveTextValue(
-                                currentMakeTextFormFieldValue, makeController,
-                                (value) {
-                              widget.car.make = value;
-                            }, () {
-                              makeController.text = widget.car.make;
-                            });
-                            FocusScope.of(context).unfocus();
-                          },
-                          onFieldSubmitted: (String newValue) {
-                            saveTextValue(
-                                currentMakeTextFormFieldValue, makeController,
-                                (value) {
-                              widget.car.make = value;
-                            }, () {
-                              makeController.text = widget.car.make;
-                            });
-                          },
                         ),
-                        TextFormField(
-                          controller: modelController,
-                          autofocus: true,
-                          obscureText: false,
+                        DropdownButtonFormField<String>(
+                          value: selectedModel,
+                          onChanged: (String? newModel) {
+                            setState(() {
+                              selectedModel = newModel;
+                              widget.car.model = newModel!;
+                            });
+                          },
+                          items: availableModels
+                              .map<DropdownMenuItem<String>>((String model) {
+                            return DropdownMenuItem<String>(
+                              value: model,
+                              child: Text(model),
+                            );
+                          }).toList(),
                           decoration: InputDecoration(
                             labelText: 'Model',
                             labelStyle:
@@ -238,31 +246,6 @@ class _AddCarFormState extends State<AddCarForm> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          style: FlutterFlowTheme.of(context).bodyMedium,
-                          onChanged: (String newValue) {
-                            setState(() {
-                              currentModelTextFormFieldValue = newValue;
-                            });
-                          },
-                          onTapOutside: (newValue) {
-                            saveTextValue(
-                                currentModelTextFormFieldValue, modelController,
-                                (value) {
-                              widget.car.model = value;
-                            }, () {
-                              modelController.text = widget.car.model;
-                            });
-                            FocusScope.of(context).unfocus();
-                          },
-                          onFieldSubmitted: (String newValue) {
-                            saveTextValue(
-                                currentModelTextFormFieldValue, modelController,
-                                (value) {
-                              widget.car.model = value;
-                            }, () {
-                              modelController.text = widget.car.model;
-                            });
-                          },
                         ),
                         TextFormField(
                           controller: yearController,
@@ -466,64 +449,6 @@ class _AddCarFormState extends State<AddCarForm> {
                               setState(() {
                                 colorController.text = newValue;
                                 widget.car.color = newValue;
-                              });
-                            }
-                          },
-                        ),
-                        DropdownButtonFormField<String>(
-                          items: carList
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          value: widget.car.type == ''
-                              ? carList.first
-                              : carList
-                                  .where(
-                                      (element) => element == widget.car.type)
-                                  .first,
-                          decoration: InputDecoration(
-                            labelText: 'Type',
-                            labelStyle:
-                                FlutterFlowTheme.of(context).labelMedium,
-                            hintStyle: FlutterFlowTheme.of(context).labelMedium,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).primary,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).error,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).error,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          style: FlutterFlowTheme.of(context).bodyMedium,
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                typeController.text = newValue;
-                                widget.car.type = newValue;
                               });
                             }
                           },
