@@ -26,9 +26,7 @@ class AddCarForm extends StatefulWidget {
 
 class _AddCarFormState extends State<AddCarForm> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  late TextEditingController makeController;
-  late TextEditingController modelController;
+  bool firstTime = true;
   late TextEditingController yearController;
   late TextEditingController colorController;
   late TextEditingController ownerController;
@@ -36,7 +34,6 @@ class _AddCarFormState extends State<AddCarForm> {
   late TextEditingController typeController;
   late TextEditingController kmController;
 
-  String currentMakeTextFormFieldValue = '';
   String currentModelTextFormFieldValue = '';
   String currentYearTextFormFieldValue = '';
   String currentColorTextFormFieldValue = '';
@@ -52,32 +49,25 @@ class _AddCarFormState extends State<AddCarForm> {
   List<String> availableModels = [];
   String? selectedModel;
 
-  List<String> colorList = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
-  // List<String> carTypeList = [
-  //   'Wagon',
-  //   'Sedan',
-  //   'Hatchback',
-  //   'SUV',
-  //   'Coupe',
-  //   'Convertible',
-  //   'Van',
-  //   'Pickup',
-  //   'Minivan',
-  //   'Bus',
-  //   'Truck',
-  //   'Motorcycle',
-  //   'Other'
-  // ];
-
   @override
   void initState() {
     loadCsvData().then((_) {
-      setState(() {});
+      setState(() {
+        if (widget.operation == Operation.modify) {
+          selectedMake = widget.car.make;
+          availableModels = carData[selectedMake] ?? [];
+          selectedModel = widget.car.model;
+        } else {
+          selectedMake = carData.keys.first;
+          availableModels = carData[selectedMake] ?? [];
+          selectedModel = availableModels.first;
+          widget.car.make = selectedMake!;
+          widget.car.model = selectedModel!;
+        }
+      });
     });
 
     super.initState();
-    makeController = TextEditingController();
-    modelController = TextEditingController();
     yearController = TextEditingController();
     colorController = TextEditingController();
     locationController = TextEditingController();
@@ -86,8 +76,6 @@ class _AddCarFormState extends State<AddCarForm> {
 
     if (widget.operation == Operation.modify) {
       setState(() {
-        makeController.text = widget.car.make;
-        modelController.text = widget.car.model;
         yearController.text = widget.car.year.toString();
         colorController.text = widget.car.color;
         locationController.text = widget.car.location;
@@ -152,7 +140,13 @@ class _AddCarFormState extends State<AddCarForm> {
                               selectedMake = newMake;
                               widget.car.make = newMake!;
                               availableModels = carData[selectedMake] ?? [];
-                              selectedModel = null; // Reset selected model
+                              if (widget.operation == Operation.modify &&
+                                  firstTime) {
+                                selectedModel = widget.car.model;
+                                firstTime = false;
+                              } else {
+                                selectedModel = null;
+                              }
                             });
                           },
                           items: carData.keys
@@ -198,7 +192,9 @@ class _AddCarFormState extends State<AddCarForm> {
                           ),
                         ),
                         DropdownButtonFormField<String>(
-                          value: selectedModel,
+                          value: availableModels.contains(selectedModel)
+                              ? selectedModel
+                              : null, // Ensure the value exists in the list
                           onChanged: (String? newModel) {
                             setState(() {
                               selectedModel = newModel;
@@ -309,6 +305,13 @@ class _AddCarFormState extends State<AddCarForm> {
                                                     (DateTime.now().year -
                                                             index)
                                                         .toString();
+                                                widget.car.year = int.parse(
+                                                    yearController.text);
+                                                if (widget.operation ==
+                                                    Operation.modify) {
+                                                  modifyCarEntryInDb(
+                                                      widget.car);
+                                                }
                                               });
                                               Navigator.of(context).pop();
                                             },
@@ -318,30 +321,6 @@ class _AddCarFormState extends State<AddCarForm> {
                                     ),
                                   );
                                 })
-                          },
-                          onChanged: (String newValue) {
-                            setState(() {
-                              currentYearTextFormFieldValue = newValue;
-                            });
-                          },
-                          onTapOutside: (newValue) {
-                            saveTextValue(
-                                currentYearTextFormFieldValue, yearController,
-                                (value) {
-                              widget.car.year = int.parse(value);
-                            }, () {
-                              yearController.text = widget.car.year.toString();
-                            });
-                            FocusScope.of(context).unfocus();
-                          },
-                          onFieldSubmitted: (String newValue) {
-                            saveTextValue(
-                                currentYearTextFormFieldValue, yearController,
-                                (value) {
-                              widget.car.year = int.parse(value);
-                            }, () {
-                              yearController.text = widget.car.year.toString();
-                            });
                           },
                         ),
                         TextFormField(
@@ -393,64 +372,6 @@ class _AddCarFormState extends State<AddCarForm> {
                                 });
                               },
                             );
-                          },
-                        ),
-                        DropdownButtonFormField<String>(
-                          items: colorList
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          value: widget.car.color == ''
-                              ? colorList.first
-                              : colorList
-                                  .where(
-                                      (element) => element == widget.car.color)
-                                  .first,
-                          decoration: InputDecoration(
-                            labelText: 'Color',
-                            labelStyle:
-                                FlutterFlowTheme.of(context).labelMedium,
-                            hintStyle: FlutterFlowTheme.of(context).labelMedium,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).primary,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).error,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).error,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          style: FlutterFlowTheme.of(context).bodyMedium,
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                colorController.text = newValue;
-                                widget.car.color = newValue;
-                              });
-                            }
                           },
                         ),
                         TextFormField(
@@ -555,7 +476,7 @@ class _AddCarFormState extends State<AddCarForm> {
                               addCarEntryToDb(widget.car);
                             } else if (widget.operation == Operation.modify) {
                               //    staticCars.remove(widget.car);
-                              removeCarEntryFromDb(widget.car.id);
+                              removeCarEntryFromDb(widget.car);
                             }
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => MyEntries()));
@@ -609,7 +530,9 @@ class _AddCarFormState extends State<AddCarForm> {
     if (currentFieldValue.isNotEmpty) {
       setState(() {
         setAttribute(currentFieldValue);
-        //if (widget.modifying) modifyRelativeInDb(widget.relative);
+        if (widget.operation == Operation.modify) {
+          modifyCarEntryInDb(widget.car);
+        }
       });
     } else {
       setState(() {

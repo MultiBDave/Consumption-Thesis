@@ -104,8 +104,8 @@ void addCarEntryToDb(CarEntry CarEntry) {
   addDocumentToCollection('CarEntrys', CarEntryData);
 }
 
-void removeCarEntryFromDb(int id) async {
-  String docID = await getDocumentID(id, 'CarEntrys');
+void removeCarEntryFromDb(CarEntry CarEntry) async {
+  String docID = await getDocumentID(CarEntry.id, 'CarEntrys');
   await db.collection('CarEntrys').doc(docID).delete();
 }
 

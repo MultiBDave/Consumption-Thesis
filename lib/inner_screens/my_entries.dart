@@ -369,7 +369,8 @@ class _MyEntriesState extends State<MyEntries> {
               ),
               onDismissed: (direction) {
                 setState(() {
-                  removeEntry(ownCars[index].id);
+                  ownCars.remove(car);
+                  removeCarEntryFromDb(car);
                 });
               },
             );
@@ -390,9 +391,5 @@ class _MyEntriesState extends State<MyEntries> {
             size: 24,
           ),
         ));
-  }
-
-  void removeEntry(int id) {
-    ownCars.removeWhere((element) => element.id == id);
   }
 }
