@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../inner_screens/fuel_management_page.dart';
 import '../main.dart';
 import '../models/car_entry.dart';
 
@@ -6,6 +7,75 @@ Future<void> addDocumentToCollection(
     String collectionName, Map<String, dynamic> data) async {
   // Add a new document to the collection
   await db.collection(collectionName).add(data);
+}
+
+void addFuelEntryToDb(int carId, FuelEntry entry) {
+  Map<String, dynamic> fuelEntryData = {
+    'id': entry.id,
+    'carId': carId,
+    'fuelAmount': entry.fuelAmount,
+    'pricePerUnit': entry.pricePerUnit,
+    'kmDriven': entry.kmDriven,
+    'date': Timestamp.now(),
+  };
+  addDocumentToCollection('FuelEntries', fuelEntryData);
+}
+
+Future<List<FuelEntry>> loadFuelEntriesFromDb(CarEntry car) async {
+  List<FuelEntry> fuelEntries = [];
+  QuerySnapshot querySnapshot = await db
+      .collection('FuelEntries')
+      .where('carId', isEqualTo: car.id)
+      .get();
+  for (var doc in querySnapshot.docs) {
+    fuelEntries.add(FuelEntry(
+      id: doc['id'],
+      carId: doc['carId'],
+      fuelAmount: doc['fuelAmount'],
+      pricePerUnit: doc['pricePerUnit'],
+      kmDriven: doc['kmDriven'],
+      date: doc['date'],
+    ));
+  }
+  return fuelEntries;
+}
+
+void removeFuelEntryFromDb(FuelEntry fuelEntry) async {
+  String docID = await getDocumentID(fuelEntry.id, 'FuelEntries');
+  await db.collection('FuelEntries').doc(docID).delete();
+}
+
+updateFuelEntry(FuelEntry fuelEntry, String documentID) {
+  DocumentReference documentReference =
+      FirebaseFirestore.instance.collection('FuelEntries').doc(documentID);
+  Map<String, dynamic> fuelEntryData = {
+    'id': fuelEntry.id,
+    'carId': fuelEntry.carId,
+    'fuelAmount': fuelEntry.fuelAmount,
+    'pricePerUnit': fuelEntry.pricePerUnit,
+    'kmDriven': fuelEntry.kmDriven,
+    'date': fuelEntry.date,
+  };
+  documentReference.set(fuelEntryData, SetOptions(merge: true));
+}
+
+loadConsumptionFromCar(CarEntry car) async {
+  List<FuelEntry> fuelEntries = await loadFuelEntriesFromDb(car);
+  int fuelSum = 0;
+  int drivenKm = 0;
+  for (var entry in fuelEntries) {
+    fuelSum += entry.fuelAmount;
+    drivenKm += entry.kmDriven;
+  }
+  car.fuelSum = fuelSum;
+  car.drivenKmSincePurchase = drivenKm;
+  car.refreshConsumption();
+  modifyCarEntryInDb(car);
+}
+
+modifyFuelEntryInDb(FuelEntry fuelEntry) async {
+  String docID = await getDocumentID(fuelEntry.id, 'FuelEntries');
+  updateFuelEntry(fuelEntry, docID);
 }
 
 void updateCarEntry(CarEntry CarEntry, String documentID) {

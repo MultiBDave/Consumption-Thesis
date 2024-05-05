@@ -1,4 +1,5 @@
 import 'package:consumption/helper/firebase.dart';
+import 'package:consumption/inner_screens/my_entries.dart';
 
 class CarEntry {
   int id;
@@ -49,7 +50,7 @@ class CarEntry {
   }
 
   CarEntry.empty()
-      : id = 0,
+      : id = ownCars.length + 1,
         make = "",
         model = "",
         year = 0,

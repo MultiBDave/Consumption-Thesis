@@ -1,17 +1,18 @@
 import 'package:consumption/components/components.dart';
 import 'package:consumption/helper/csv_handler.dart';
+import 'package:consumption/inner_screens/fuel_management_page.dart';
 import 'package:consumption/models/car_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:consumption/main.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 
-import '../../helper/custom_app_bar.dart';
-import '../../helper/firebase.dart';
-import '../../helper/flutter_flow/flutter_flow_theme.dart';
-import '../../helper/flutter_flow/flutter_flow_widgets.dart';
-import '../my_entries.dart';
-import '../list_cars.dart';
+import '../helper/custom_app_bar.dart';
+import '../helper/firebase.dart';
+import '../helper/flutter_flow/flutter_flow_theme.dart';
+import '../helper/flutter_flow/flutter_flow_widgets.dart';
+import 'my_entries.dart';
+import 'list_cars.dart';
 
 class AddCarForm extends StatefulWidget {
   final CarEntry car;
@@ -54,6 +55,7 @@ class _AddCarFormState extends State<AddCarForm> {
     loadCsvData().then((_) {
       setState(() {
         if (widget.operation == Operation.modify) {
+          loadConsumptionFromCar(widget.car);
           selectedMake = widget.car.make;
           availableModels = carData[selectedMake] ?? [];
           selectedModel = widget.car.model;
@@ -516,6 +518,50 @@ class _AddCarFormState extends State<AddCarForm> {
                       ),
                     ),
                   ),
+                  widget.operation == Operation.modify
+                      ? Align(
+                          alignment: const AlignmentDirectional(0.00, 0.00),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                0, 34, 0, 12),
+                            child: FFButtonWidget(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        FuelManagementPage(car: widget.car),
+                                  ),
+                                );
+                              },
+                              text: 'Manage Fuel Entries',
+                              options: FFButtonOptions(
+                                width: 600,
+                                height: 48,
+                                padding: const EdgeInsetsDirectional.fromSTEB(
+                                    0, 0, 0, 0),
+                                iconPadding:
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 0),
+                                color: widget.operation == Operation.modify
+                                    ? const Color(0xFFEFEFEF)
+                                    : FlutterFlowTheme.of(context).primary,
+                                textStyle: FlutterFlowTheme.of(context)
+                                    .titleSmall
+                                    .override(
+                                      fontFamily: 'Readex Pro',
+                                      color: Colors.white,
+                                    ),
+                                elevation: 4,
+                                borderSide: const BorderSide(
+                                  color: Colors.transparent,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
                 ],
               ),
             ),
