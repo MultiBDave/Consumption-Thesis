@@ -1,4 +1,3 @@
-import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 import 'package:fast_csv/fast_csv.dart' as _fast_csv;
 
@@ -24,7 +23,4 @@ Future<void> loadCsvData() async {
       carData[make] = [model];
     }
   }
-
-  // Debug print to check what carData contains after processing
-  print("Car Data Loaded: $carData");
 }

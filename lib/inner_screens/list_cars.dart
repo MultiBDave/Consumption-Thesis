@@ -1,9 +1,7 @@
 import 'package:consumption/auth_screens/home_screen.dart';
-import 'package:consumption/auth_screens/login_screen.dart';
-import 'package:consumption/home_page.dart';
+import 'package:consumption/helper/csv_handler.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_drop_down.dart';
@@ -16,7 +14,6 @@ import 'package:flutter/services.dart';
 import '../main.dart';
 import '../models/car_entry.dart';
 import '../models/home_page_model.dart';
-import 'add_or_update_car_page.dart';
 export '../models/home_page_model.dart';
 
 class ListCarsScreen extends StatefulWidget {
@@ -31,25 +28,9 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
   late ListCarsScreenModel _model;
   List<CarEntry> allCars = [];
 
-  List<String> makes = [];
-  List<String> models = [];
-
-  List<String> colorList = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
-  List<String> carList = [
-    'Wagon',
-    'Sedan',
-    'Hatchback',
-    'SUV',
-    'Coupe',
-    'Convertible',
-    'Van',
-    'Pickup',
-    'Minivan',
-    'Bus',
-    'Truck',
-    'Motorcycle',
-    'Other'
-  ];
+  String? selectedMake;
+  List<String> availableModels = [];
+  String? selectedModel;
 
   List<CarEntry> filteredAllCars = [];
 
@@ -90,6 +71,13 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
         filteredAllCars = value;
       });
     });
+    loadCsvData().then((_) {
+      setState(() {
+        selectedMake = carData.keys.first;
+        availableModels = carData[selectedMake] ?? [];
+        selectedModel = availableModels.first;
+      });
+    });
   }
 
   void filterCars() {
@@ -104,13 +92,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
     if (maxKmController.text.isNotEmpty) {
       deeperFilteredCars = deeperFilteredCars
           .where((car) => car.drivenKm <= int.parse(maxKmController.text))
-          .toList();
-    }
-
-    // Filter by Car Color
-    if (currentColorTextFormFieldValue.isNotEmpty) {
-      deeperFilteredCars = deeperFilteredCars
-          .where((car) => car.color == currentColorTextFormFieldValue)
           .toList();
     }
 
@@ -159,6 +140,10 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
     super.dispose();
   }
 
+  void refresh() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isiOS) {
@@ -184,7 +169,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text('Filter Cars'),
+                  title: const Text('Filter Cars'),
                   content: SingleChildScrollView(
                     child: Column(
                       children: <Widget>[
@@ -205,27 +190,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                             // other decoration properties
                           ),
                         ),
-
-                        // Dropdown for Car Color
-                        DropdownButtonFormField(
-                          value: colorList.firstWhere(
-                              (element) =>
-                                  element == currentColorTextFormFieldValue,
-                              orElse: () => colorList[0]),
-                          items: colorList.map((color) {
-                            return DropdownMenuItem(
-                              value: color,
-                              child: Text(color),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              currentColorTextFormFieldValue = value.toString();
-                            });
-                          },
-                          decoration:
-                              const InputDecoration(labelText: 'Car Color'),
-                        ),
                         // Location Picker
                         ElevatedButton(
                           onPressed: () {
@@ -238,15 +202,9 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                               },
                             );
                           },
-                          child: Text('Pick Location'),
+                          child: const Text('Pick Location'),
                         ),
                         // TextFormField for Car Type
-                        TextFormField(
-                          controller: typeController,
-                          decoration:
-                              const InputDecoration(labelText: 'Car Type'),
-                        ),
-
                         TextFormField(
                           controller: minYearController,
                           keyboardType: TextInputType.number,
@@ -343,7 +301,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                   ),
                   actions: <Widget>[
                     TextButton(
-                      child: Text('Apply'),
+                      child: const Text('Apply'),
                       onPressed: () {
                         setState(() {
                           filterCars();
@@ -403,15 +361,23 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                 FlutterFlowDropDown(
                   controller: _model.dropDownValueController1 ??=
                       FormFieldController<String>(null),
-                  options: makes,
-                  onChanged: (val) => {
-                    setState(() => _model.dropDownValue1 = val),
-                    if (val != 'All' || val != null)
-                      {
+                  options: ['All'] + carData.keys.toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      selectedMake = val;
+                      availableModels = carData[selectedMake] ?? [];
+                      selectedModel = null;
+                      _model.dropDownValue1 = val;
+                      if (val != 'All' || val != null) {
                         filteredAllCars =
-                            allCars.where((car) => car.make == val).toList(),
-                      },
-                    filterCars(),
+                            allCars.where((car) => car.make == val).toList();
+                      } else {
+                        _model.dropDownValue2 = 'All';
+                        selectedModel = 'All';
+                        filteredAllCars = allCars;
+                      }
+                      filterCars();
+                    });
                   },
                   width: 150,
                   height: 50,
@@ -427,25 +393,28 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                   borderColor: FlutterFlowTheme.of(context).alternate,
                   borderWidth: 2,
                   borderRadius: 8,
-                  margin: EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
+                  margin: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
                   hidesUnderline: true,
                 ),
                 Flexible(
                   child: Align(
-                    alignment: AlignmentDirectional(1.00, 0.00),
+                    alignment: const AlignmentDirectional(1.00, 0.00),
                     child: FlutterFlowDropDown(
                       controller: _model.dropDownValueController2 ??=
                           FormFieldController<String>(null),
-                      options: models,
-                      onChanged: (val) => {
-                        setState(() => _model.dropDownValue2 = val),
-                        if (val != 'All' || val != null)
-                          {
+                      options: ['All'] + availableModels,
+                      onChanged: (val) {
+                        setState(() {
+                          _model.dropDownValue2 = val;
+                          if (val != 'All' && val != null) {
                             filteredAllCars = allCars
                                 .where((car) => car.model == val)
-                                .toList(),
-                          },
-                        filterCars(),
+                                .toList();
+                          } else {
+                            filteredAllCars = allCars;
+                          }
+                          filterCars(); // Apply other filters
+                        });
                       },
                       width: 150,
                       height: 50,
@@ -462,7 +431,8 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                       borderColor: FlutterFlowTheme.of(context).alternate,
                       borderWidth: 2,
                       borderRadius: 8,
-                      margin: EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
+                      margin:
+                          const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
                       hidesUnderline: true,
                     ),
                   ),
@@ -474,13 +444,13 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
+                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: FlutterFlowTheme.of(context).secondaryBackground,
                         boxShadow: [
-                          BoxShadow(
+                          const BoxShadow(
                             blurRadius: 0,
                             color: Color(0xFFE0E3E7),
                             offset: Offset(0, 1),
@@ -490,14 +460,15 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                         shape: BoxShape.rectangle,
                       ),
                       child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
+                        padding:
+                            const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           children: [
                             Expanded(
                               child: Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
+                                padding: const EdgeInsetsDirectional.fromSTEB(
+                                    12, 0, 0, 0),
                                 child: Text(
                                   'Vehicle',
                                   style: FlutterFlowTheme.of(context)
@@ -512,18 +483,20 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                               ),
                             ),
                             Align(
-                              alignment: AlignmentDirectional(-1.00, 0.00),
+                              alignment:
+                                  const AlignmentDirectional(-1.00, 0.00),
                               child: Container(
-                                width: 100,
+                                width: 200,
                                 height: 30,
                                 decoration: BoxDecoration(
                                   color: FlutterFlowTheme.of(context)
                                       .secondaryBackground,
                                 ),
                                 child: Align(
-                                  alignment: AlignmentDirectional(-1.00, 0.00),
+                                  alignment:
+                                      const AlignmentDirectional(-1.00, 0.00),
                                   child: Text(
-                                    'Mileage',
+                                    'L / 100 km',
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .override(
@@ -535,16 +508,17 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                               ),
                             ),
                             Container(
-                              width: 100,
+                              width: 200,
                               height: 30,
                               decoration: BoxDecoration(
                                 color: FlutterFlowTheme.of(context)
                                     .secondaryBackground,
                               ),
                               child: Align(
-                                alignment: AlignmentDirectional(-1.00, 0.00),
+                                alignment:
+                                    const AlignmentDirectional(-1.00, 0.00),
                                 child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                  padding: const EdgeInsetsDirectional.fromSTEB(
                                       12, 0, 0, 0),
                                   child: Text(
                                     'User',
@@ -614,7 +588,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                                       alignment: const AlignmentDirectional(
                                           -1.00, 0.00),
                                       child: Container(
-                                        width: 100,
+                                        width: 200,
                                         height: 30,
                                         decoration: BoxDecoration(
                                           color: FlutterFlowTheme.of(context)
@@ -624,7 +598,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                                           alignment: const AlignmentDirectional(
                                               -1.00, 0.00),
                                           child: Text(
-                                            '${filteredAllCars[index].consumption} km',
+                                            '${filteredAllCars[index].consumption.toStringAsFixed(2)}',
                                             style: FlutterFlowTheme.of(context)
                                                 .bodyMedium,
                                           ),
@@ -632,7 +606,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                                       ),
                                     ),
                                     Container(
-                                      width: 100,
+                                      width: 200,
                                       height: 30,
                                       decoration: BoxDecoration(
                                         color: FlutterFlowTheme.of(context)
@@ -645,7 +619,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                                           padding: const EdgeInsetsDirectional
                                               .fromSTEB(12, 0, 0, 0),
                                           child: Text(
-                                            '${filteredAllCars[index].ownerUsername} km',
+                                            '${filteredAllCars[index].ownerUsername}',
                                             style: FlutterFlowTheme.of(context)
                                                 .labelMedium,
                                           ),

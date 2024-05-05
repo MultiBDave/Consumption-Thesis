@@ -4,9 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../components/components.dart';
 import '../home_page.dart';
-import '../inner_screens/list_cars.dart';
 import 'home_screen.dart';
-import 'welcome.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

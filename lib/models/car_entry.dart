@@ -1,4 +1,3 @@
-import 'package:consumption/helper/firebase.dart';
 import 'package:consumption/inner_screens/my_entries.dart';
 
 class CarEntry {

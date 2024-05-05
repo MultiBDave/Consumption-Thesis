@@ -4,8 +4,6 @@ import 'package:consumption/inner_screens/fuel_management_page.dart';
 import 'package:consumption/models/car_entry.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:consumption/main.dart';
-import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 
 import '../helper/custom_app_bar.dart';
@@ -14,7 +12,6 @@ import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../helper/flutter_flow/flutter_flow_util.dart';
 import '../helper/flutter_flow/flutter_flow_widgets.dart';
 import 'my_entries.dart';
-import 'list_cars.dart';
 
 class AddCarForm extends StatefulWidget {
   final CarEntry car;
