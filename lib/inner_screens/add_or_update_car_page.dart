@@ -2,6 +2,7 @@ import 'package:consumption/components/components.dart';
 import 'package:consumption/helper/csv_handler.dart';
 import 'package:consumption/inner_screens/fuel_management_page.dart';
 import 'package:consumption/models/car_entry.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:consumption/main.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:country_picker/country_picker.dart';
 import '../helper/custom_app_bar.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
+import '../helper/flutter_flow/flutter_flow_util.dart';
 import '../helper/flutter_flow/flutter_flow_widgets.dart';
 import 'my_entries.dart';
 import 'list_cars.dart';
@@ -41,6 +43,7 @@ class _AddCarFormState extends State<AddCarForm> {
   String currentLocationTextFormFieldValue = '';
   String currentTypeTextFormFieldValue = '';
   String currentKmTextFormFieldValue = '';
+  List<FlSpot> averageConsumptionSpots = [];
 
   String carConsumptionValue = '';
 
@@ -77,6 +80,13 @@ class _AddCarFormState extends State<AddCarForm> {
     kmController = TextEditingController();
 
     if (widget.operation == Operation.modify) {
+      loadFuelEntriesFromDb(widget.car).then((entries) {
+        setState(() {
+          fuelEntries = entries;
+          calculateAverageConsumptionOverTime();
+        });
+      });
+
       setState(() {
         yearController.text = widget.car.year.toString();
         colorController.text = widget.car.color;
@@ -123,7 +133,9 @@ class _AddCarFormState extends State<AddCarForm> {
                         Align(
                           alignment: const AlignmentDirectional(-1.00, 0.00),
                           child: Text(
-                            'Add new car',
+                            widget.operation == Operation.modify
+                                ? 'Modify Car'
+                                : 'Add Car',
                             style: FlutterFlowTheme.of(context)
                                 .headlineMedium
                                 .override(
@@ -462,6 +474,68 @@ class _AddCarFormState extends State<AddCarForm> {
                       ],
                     ),
                   ),
+                  widget.operation == Operation.modify
+                      ? Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            height: 300,
+                            child: LineChart(
+                              LineChartData(
+                                minY: 0,
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    spots: averageConsumptionSpots,
+                                    isCurved: true,
+                                    color: Colors.blue,
+                                    barWidth: 2,
+                                    belowBarData: BarAreaData(show: true),
+                                  ),
+                                ],
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 40,
+                                      getTitlesWidget: (value, meta) {
+                                        return Text(
+                                          '${value.toStringAsFixed(1)} L/100km',
+                                          style: const TextStyle(fontSize: 10),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      interval: 1,
+                                      getTitlesWidget: (value, meta) {
+                                        int index = value.toInt();
+                                        if (index >= 0 &&
+                                            index < xAxisLabels.length) {
+                                          // Format the date as needed
+                                          String formattedDate =
+                                              DateFormat('MM/dd')
+                                                  .format(xAxisLabels[index]);
+                                          return Text(
+                                            formattedDate,
+                                            style:
+                                                const TextStyle(fontSize: 10),
+                                          );
+                                        } else {
+                                          return const Text('');
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
                   Align(
                     alignment: const AlignmentDirectional(0.00, 0.00),
                     child: Padding(
@@ -586,4 +660,34 @@ class _AddCarFormState extends State<AddCarForm> {
       });
     }
   }
+
+  void calculateAverageConsumptionOverTime() {
+    averageConsumptionSpots.clear();
+    List<DateTime> dates = [];
+
+    fuelEntries.sort((a, b) => a.date!.compareTo(b.date!));
+
+    double totalFuel = 0;
+    int previousKm = fuelEntries.isNotEmpty ? fuelEntries.first.kmDriven : 0;
+
+    for (int i = 0; i < fuelEntries.length; i++) {
+      totalFuel += fuelEntries[i].fuelAmount;
+      int currentKm = fuelEntries[i].kmDriven;
+
+      if (i > 0) {
+        int distanceDriven = currentKm - previousKm;
+        double averageConsumption =
+            distanceDriven > 0 ? (totalFuel / distanceDriven) * 100 : 0.0;
+        averageConsumptionSpots.add(FlSpot(i.toDouble(), averageConsumption));
+        dates.add(fuelEntries[i].date!.toDate());
+      }
+
+      previousKm = currentKm;
+    }
+
+    // Store the corresponding dates for labeling purposes
+    xAxisLabels = dates;
+  }
+
+  List<DateTime> xAxisLabels = [];
 }
