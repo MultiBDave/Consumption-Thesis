@@ -482,7 +482,8 @@ class _AddCarFormState extends State<AddCarForm> {
                                 lineBarsData: [
                                   LineChartBarData(
                                     spots: averageConsumptionSpots,
-                                    isCurved: true,
+                                    isCurved: false,
+                                    isStrokeJoinRound: true,
                                     color: Colors.blue,
                                     barWidth: 2,
                                     belowBarData: BarAreaData(show: true),
