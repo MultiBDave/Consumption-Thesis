@@ -7,12 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 import '../auth_screens/home_screen.dart';
-import '../components/components.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_icon_button.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../models/car_entry.dart';
-
+import '../../components/components.dart';
 enum Operation { modify, add }
 
 class MyEntries extends StatefulWidget {
@@ -26,6 +25,19 @@ class _MyEntriesState extends State<MyEntries> {
   TextEditingController fuelController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
   List<CarEntry> ownCars = [];
+  
+  // Helper function to convert color string to Color
+  Color getColorFromString(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case 'red': return Colors.red;
+      case 'blue': return Colors.blue;
+      case 'green': return Colors.green;
+      case 'yellow': return Colors.yellow;
+      case 'black': return Colors.black;
+      case 'white': return Colors.white;
+      default: return Colors.grey;
+    }
+  }
 
   Future<List<CarEntry>> _loadCarEntryData() async {
     // Load the data asynchronously
@@ -35,11 +47,7 @@ class _MyEntriesState extends State<MyEntries> {
     return data;
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    isLoggedIn = FirebaseAuth.instance.currentUser != null;
-    super.initState();
+  void _refreshCarList() {
     if (isLoggedIn) {
       _loadCarEntryData().then((value) {
         setState(() {
@@ -48,186 +56,321 @@ class _MyEntriesState extends State<MyEntries> {
               .where(
                   (element) => element.ownerUsername == auth.currentUser!.email)
               .toList();
+              
+          // Update all cars' consumption and range estimates
+          for (var car in ownCars) {
+            car.refreshConsumption();
+          }
         });
       });
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primary,
-          automaticallyImplyLeading: false,
-          title: Text(
-            'My vehicles',
-            style: FlutterFlowTheme.of(context).headlineMedium.override(
-                  fontFamily: 'Outfit',
-                  color: Colors.white,
-                  fontSize: 22,
-                ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
-              color: isLoggedIn ? Colors.black : Colors.white,
+  void initState() {
+    super.initState();
+    // Check login status
+    isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    
+    _refreshCarList();
+  }
+
+  void _deleteVehicle(CarEntry car) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Vehicle'),
+          content: Text('Are you sure you want to delete this vehicle?'),
+          actions: [
+            TextButton(
               onPressed: () {
-                if (isLoggedIn) {
-                  // Logout
-                  FirebaseAuth.instance.signOut();
-                  setState(() {
-                    Navigator.of(context).pushNamed(ListCarsScreen.id);
-                    isLoggedIn = false;
-                  });
-                } else {
-                  // Navigate to login screen
-                  Navigator.of(context).pushNamed(HomeScreen.id);
-                }
+                Navigator.of(context).pop();
               },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  removeCarEntryFromDb(car.id);
+                  removeEntry(car.id);
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
-          centerTitle: false,
-          elevation: 2,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: FlutterFlowTheme.of(context).primary,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'My vehicles',
+          style: FlutterFlowTheme.of(context).headlineMedium.override(
+                fontFamily: 'Outfit',
+                color: Colors.white,
+                fontSize: 22,
+              ),
         ),
-        body: ListView.builder(
-          itemCount: ownCars.length,
-          itemBuilder: (BuildContext context, int index) {
-            CarEntry car = ownCars[index];
-            ownCars[index].refreshConsumption();
-            return Dismissible(
-              key: ValueKey<int>(ownCars[index].id),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 1),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: FlutterFlowTheme.of(context).secondaryBackground,
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 0,
-                        color: Color(0xFFE0E3E7),
-                        offset: Offset(0, 1),
-                      )
-                    ],
-                    borderRadius: BorderRadius.circular(0),
-                    shape: BoxShape.rectangle,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
+            color: isLoggedIn ? Colors.black : Colors.white,
+            onPressed: () {
+              if (isLoggedIn) {
+                // Logout
+                FirebaseAuth.instance.signOut();
+                setState(() {
+                  isLoggedIn = false;
+                  ownCars.clear();
+                });
+              } else {
+                // Navigate to login screen
+                Navigator.of(context).pushNamed(HomeScreen.id);
+              }
+            },
+          ),
+        ],
+        centerTitle: false,
+        elevation: 2,
+      ),
+      body: ownCars.isEmpty 
+        ? const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.directions_car_outlined, 
+                  size: 80,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No vehicles yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                12, 0, 0, 0),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Add your first vehicle with the + button',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            )
+          )
+        : ListView.builder(
+            itemCount: ownCars.length,
+            itemBuilder: (BuildContext context, int index) {
+              CarEntry car = ownCars[index];
+              
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Expanded(
                             child: Text(
-                              '${car.make} ${car.model}',
+                              '${car.make} ${car.model} (${car.year})',
                               style: FlutterFlowTheme.of(context)
-                                  .labelLarge
+                                  .titleMedium
                                   .override(
                                     fontFamily: 'Readex Pro',
                                     color: FlutterFlowTheme.of(context)
                                         .primaryText,
+                                    fontWeight: FontWeight.bold,
                                   ),
                             ),
                           ),
-                        ),
-                        Align(
-                          alignment: const AlignmentDirectional(-1.00, 0.00),
-                          child: Container(
-                            width: 100,
-                            height: 30,
+                          Container(
+                            width: 16,
+                            height: 16,
                             decoration: BoxDecoration(
-                              color: FlutterFlowTheme.of(context)
-                                  .secondaryBackground,
-                            ),
-                            child: Align(
-                              alignment:
-                                  const AlignmentDirectional(-1.00, 0.00),
-                              child: Text(
-                                car.consumption,
-                                style: FlutterFlowTheme.of(context).bodyMedium,
-                              ),
+                              color: getColorFromString(car.color),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade300),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                      Divider(),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.speed,
+                            size: 16,
+                            color: FlutterFlowTheme.of(context).secondaryText,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            '${car.drivenKm} km',
+                            style: FlutterFlowTheme.of(context)
+                                .bodyMedium
+                                .override(
+                                  fontFamily: 'Readex Pro',
+                                  color: FlutterFlowTheme.of(context)
+                                      .secondaryText,
+                                ),
+                          ),
+                          if (car.initialKm > 0) 
+                            Text(
+                              ' (initial: ${car.initialKm} km)',
+                              style: FlutterFlowTheme.of(context)
+                                  .bodySmall
+                                  .override(
+                                    fontFamily: 'Readex Pro',
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                    fontSize: 12,
+                                  ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_gas_station,
+                            size: 16,
+                            color: FlutterFlowTheme.of(context).secondaryText,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Consumption: ${car.consumption} L/100km',
+                            style: FlutterFlowTheme.of(context).bodyMedium,
+                          ),
+                        ],
+                      ),
+                      if (car.tankSize > 0)
                         Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(0, 0, 15, 0),
-                          child: FlutterFlowIconButton(
-                            borderRadius: 10,
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.map,
+                                size: 16,
+                                color: FlutterFlowTheme.of(context).primary,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Est. range with full tank: ${car.estimatedRange}',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                      fontFamily: 'Readex Pro',
+                                      color: FlutterFlowTheme.of(context).primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          FlutterFlowIconButton(
+                            borderRadius: 20,
                             borderWidth: 1,
-                            buttonSize: 30,
+                            buttonSize: 40,
+                            fillColor: FlutterFlowTheme.of(context).accent1,
                             icon: Icon(
                               Icons.local_gas_station,
-                              color: FlutterFlowTheme.of(context).primaryText,
+                              color: FlutterFlowTheme.of(context).primaryBackground,
                               size: 20,
                             ),
                             onPressed: () {
                               showDialog(
                                   context: context,
                                   builder: (BuildContext context) {
+                                    fuelController.clear();
+                                    distanceController.text = car.drivenKm.toString();
                                     return AlertDialog(
                                       title: const Text('Add fuel'),
                                       content: Container(
-                                        height: 200,
-                                        child: Row(
+                                        height: 180,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Text('Fuel amount: '),
-                                            Expanded(
-                                              child: TextField(
-                                                controller: fuelController,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (String newValue) {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text);
-                                                },
-                                                onTapOutside: (newValue) {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text);
-                                                },
-                                                onSubmitted: (value) => {
-                                                  currentFuelValue = int.parse(
-                                                      fuelController.text)
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        hintText: 'Amount'),
-                                              ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text('Fuel amount (liters):'),
+                                                ),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: TextField(
+                                                    controller: fuelController,
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    onChanged: (String newValue) {
+                                                      if (newValue.isNotEmpty) {
+                                                        currentFuelValue = int.parse(
+                                                            fuelController.text);
+                                                      }
+                                                    },
+                                                    decoration:
+                                                        const InputDecoration(
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                            hintText: 'Amount'),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const Text('Current km in car:'),
-                                            Expanded(
-                                              child: TextField(
-                                                controller: distanceController,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (String newValue) {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text);
-                                                },
-                                                onTapOutside: (newValue) {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text);
-                                                },
-                                                onSubmitted: (value) => {
-                                                  currentDistanceValue =
-                                                      int.parse(
-                                                          distanceController
-                                                              .text)
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        hintText: 'Amount'),
-                                              ),
+                                            SizedBox(height: 16),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text('Current odometer:'),
+                                                ),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: TextField(
+                                                    controller: distanceController,
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    onChanged: (String newValue) {
+                                                      if (newValue.isNotEmpty) {
+                                                        currentDistanceValue =
+                                                            int.parse(
+                                                                distanceController
+                                                                    .text);
+                                                      }
+                                                    },
+                                                    decoration:
+                                                        const InputDecoration(
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                            hintText: 'Km'),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -240,6 +383,14 @@ class _MyEntriesState extends State<MyEntries> {
                                             child: const Text('Cancel')),
                                         TextButton(
                                             onPressed: () {
+                                              if (fuelController.text.isEmpty || 
+                                                  distanceController.text.isEmpty) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Please fill in all fields'))
+                                                );
+                                                return;
+                                              }
+                                              
                                               setState(() {
                                                 ownCars[index].fuelSum +=
                                                     currentFuelValue;
@@ -247,6 +398,10 @@ class _MyEntriesState extends State<MyEntries> {
                                                     currentDistanceValue;
                                                 ownCars[index]
                                                     .refreshConsumption();
+                                                
+                                                // Update the car in the database
+                                                modifyCarEntryInDb(ownCars[index]);
+                                                    
                                                 Navigator.of(context).pop();
                                               });
                                             },
@@ -256,77 +411,284 @@ class _MyEntriesState extends State<MyEntries> {
                                   });
                             },
                           ),
-                        ),
-                        InkWell(
-                          splashColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onTap: () async {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => AddCarForm(
-                                    car: ownCars[index],
-                                    operation: Operation.modify)));
-                          },
-                          child: Card(
-                            clipBehavior: Clip.antiAliasWithSaveLayer,
-                            color:
-                                FlutterFlowTheme.of(context).primaryBackground,
-                            elevation: 1,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(40),
+                          SizedBox(width: 8),
+                          FlutterFlowIconButton(
+                            borderRadius: 20,
+                            borderWidth: 1,
+                            buttonSize: 40,
+                            fillColor: FlutterFlowTheme.of(context).tertiary,
+                            icon: Icon(
+                              Icons.edit,
+                              color: FlutterFlowTheme.of(context).primaryBackground,
+                              size: 20,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.fromSTEB(
-                                  4, 4, 4, 4),
-                              child: InkWell(
-                                splashColor: Colors.transparent,
-                                focusColor: Colors.transparent,
-                                hoverColor: Colors.transparent,
-                                highlightColor: Colors.transparent,
-                                onTap: () async {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => AddCarForm(
-                                          car: ownCars[index],
-                                          operation: Operation.modify)));
+                            onPressed: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Edit Vehicle',
+                                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                                            ),
+                                            SizedBox(height: 16),
+                                            TextField(
+                                              controller: TextEditingController(text: ownCars[index].make),
+                                              decoration: InputDecoration(labelText: 'Make', border: OutlineInputBorder()),
+                                              onChanged: (val) => ownCars[index].make = val,
+                                            ),
+                                            SizedBox(height: 12),
+                                            TextField(
+                                              controller: TextEditingController(text: ownCars[index].model),
+                                              decoration: InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
+                                              onChanged: (val) => ownCars[index].model = val,
+                                            ),
+                                            SizedBox(height: 12),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller: TextEditingController(text: ownCars[index].year.toString()),
+                                                    decoration: InputDecoration(labelText: 'Year', border: OutlineInputBorder()),
+                                                    keyboardType: TextInputType.number,
+                                                    onChanged: (val) => ownCars[index].year = int.tryParse(val) ?? ownCars[index].year,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 12),
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller: TextEditingController(text: ownCars[index].color),
+                                                    decoration: InputDecoration(labelText: 'Color', border: OutlineInputBorder()),
+                                                    onChanged: (val) => ownCars[index].color = val,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 12),
+                                            TextField(
+                                              controller: TextEditingController(text: ownCars[index].type),
+                                              decoration: InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                                              onChanged: (val) => ownCars[index].type = val,
+                                            ),
+                                            SizedBox(height: 12),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller: TextEditingController(text: ownCars[index].drivenKm.toString()),
+                                                    decoration: InputDecoration(labelText: 'Odometer (km)', border: OutlineInputBorder()),
+                                                    keyboardType: TextInputType.number,
+                                                    onChanged: (val) => ownCars[index].drivenKm = int.tryParse(val) ?? ownCars[index].drivenKm,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 12),
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller: TextEditingController(text: ownCars[index].initialKm.toString()),
+                                                    decoration: InputDecoration(labelText: 'Initial km', border: OutlineInputBorder()),
+                                                    keyboardType: TextInputType.number,
+                                                    onChanged: (val) => ownCars[index].initialKm = int.tryParse(val) ?? ownCars[index].initialKm,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 12),
+                                            TextField(
+                                              controller: TextEditingController(text: ownCars[index].tankSize.toString()),
+                                              decoration: InputDecoration(labelText: 'Tank size (L)', border: OutlineInputBorder()),
+                                              keyboardType: TextInputType.number,
+                                              onChanged: (val) => ownCars[index].tankSize = int.tryParse(val) ?? ownCars[index].tankSize,
+                                            ),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.end,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                  child: Text('Cancel'),
+                                                ),
+                                                SizedBox(width: 8),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.black,
+                                                    foregroundColor: Colors.white,
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                  ),
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      modifyCarEntryInDb(ownCars[index]);
+                                                    });
+                                                    Navigator.of(context).pop();
+                                                    _refreshCarList();
+                                                  },
+                                                  child: Text('Save'),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
                                 },
-                                child: Icon(
-                                  Icons.keyboard_arrow_right_rounded,
-                                  color: FlutterFlowTheme.of(context)
-                                      .secondaryText,
-                                  size: 24,
-                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(width: 8),
+                          FlutterFlowIconButton(
+                            borderRadius: 20,
+                            borderWidth: 1,
+                            buttonSize: 40,
+                            fillColor: Colors.red,
+                            icon: Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              _deleteVehicle(car);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await showDialog(
+            context: context,
+            builder: (context) {
+              CarEntry newCar = CarEntry.empty();
+              return Dialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Add Vehicle',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        SizedBox(height: 16),
+                        TextField(
+                          decoration: InputDecoration(labelText: 'Make', border: OutlineInputBorder()),
+                          onChanged: (val) => newCar.make = val,
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
+                          onChanged: (val) => newCar.model = val,
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(labelText: 'Year', border: OutlineInputBorder()),
+                                keyboardType: TextInputType.number,
+                                onChanged: (val) => newCar.year = int.tryParse(val) ?? 0,
                               ),
                             ),
-                          ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(labelText: 'Color', border: OutlineInputBorder()),
+                                onChanged: (val) => newCar.color = val,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                          onChanged: (val) => newCar.type = val,
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(labelText: 'Odometer (km)', border: OutlineInputBorder()),
+                                keyboardType: TextInputType.number,
+                                onChanged: (val) => newCar.drivenKm = int.tryParse(val) ?? 0,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(labelText: 'Initial km', border: OutlineInputBorder()),
+                                keyboardType: TextInputType.number,
+                                onChanged: (val) => newCar.initialKm = int.tryParse(val) ?? 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(labelText: 'Tank size (L)', border: OutlineInputBorder()),
+                          keyboardType: TextInputType.number,
+                          onChanged: (val) => newCar.tankSize = int.tryParse(val) ?? 0,
+                        ),
+                        SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: Text('Cancel'),
+                            ),
+                            SizedBox(width: 8),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  newCar.id = DateTime.now().millisecondsSinceEpoch;
+                                  newCar.ownerUsername = auth.currentUser!.email!;
+                                  addCarEntryToDb(newCar);
+                                });
+                                Navigator.of(context).pop();
+                                _refreshCarList();
+                              },
+                              child: Text('Add'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              onDismissed: (direction) {
-                setState(() {
-                  removeEntry(ownCars[index].id);
-                });
-              },
-            );
-          },
+              );
+            },
+          );
+        },
+        backgroundColor: FlutterFlowTheme.of(context).primary,
+        elevation: 4,
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 24,
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => AddCarForm(
-                    car: CarEntry.empty(), operation: Operation.add)));
-          },
-          backgroundColor: FlutterFlowTheme.of(context).primary,
-          elevation: 8,
-          child: Icon(
-            Icons.add,
-            color: FlutterFlowTheme.of(context).info,
-            size: 24,
-          ),
-        ));
+      ),
+    );
   }
 
   void removeEntry(int id) {

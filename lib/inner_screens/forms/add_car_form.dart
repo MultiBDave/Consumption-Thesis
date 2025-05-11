@@ -1,7 +1,4 @@
-import 'package:consumption/components/components.dart';
 import 'package:consumption/models/car_entry.dart';
-import 'package:flutter/material.dart';
-import 'package:consumption/main.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 
@@ -10,8 +7,7 @@ import '../../helper/firebase.dart';
 import '../../helper/flutter_flow/flutter_flow_theme.dart';
 import '../../helper/flutter_flow/flutter_flow_widgets.dart';
 import '../my_entries.dart';
-import '../list_cars.dart';
-
+import '../../components/components.dart';
 class AddCarForm extends StatefulWidget {
   final CarEntry car;
   final Operation operation;
@@ -34,6 +30,8 @@ class _AddCarFormState extends State<AddCarForm> {
   late TextEditingController locationController;
   late TextEditingController typeController;
   late TextEditingController kmController;
+  late TextEditingController initialKmController;
+  late TextEditingController tankSizeController;
 
   String currentMakeTextFormFieldValue = '';
   String currentModelTextFormFieldValue = '';
@@ -42,6 +40,8 @@ class _AddCarFormState extends State<AddCarForm> {
   String currentLocationTextFormFieldValue = '';
   String currentTypeTextFormFieldValue = '';
   String currentKmTextFormFieldValue = '';
+  String currentInitialKmTextFormFieldValue = '';
+  String currentTankSizeTextFormFieldValue = '';
 
   bool passwordFieldVisibility = false;
 
@@ -72,6 +72,8 @@ class _AddCarFormState extends State<AddCarForm> {
     locationController = TextEditingController();
     typeController = TextEditingController();
     kmController = TextEditingController();
+    initialKmController = TextEditingController();
+    tankSizeController = TextEditingController();
 
     if (widget.operation == Operation.modify) {
       setState(() {
@@ -82,6 +84,8 @@ class _AddCarFormState extends State<AddCarForm> {
         locationController.text = widget.car.location;
         typeController.text = widget.car.type;
         kmController.text = widget.car.drivenKm.toString();
+        initialKmController.text = widget.car.initialKm.toString();
+        tankSizeController.text = widget.car.tankSize.toString();
       });
     }
   }
@@ -591,12 +595,150 @@ class _AddCarFormState extends State<AddCarForm> {
                             });
                           },
                         ),
+                        // Initial mileage field (for used cars)
+                        TextFormField(
+                          controller: initialKmController,
+                          autofocus: true,
+                          obscureText: false,
+                          decoration: InputDecoration(
+                            labelText: 'Initial Kilometers (for used cars)',
+                            hintText: 'Enter initial mileage for used cars',
+                            labelStyle:
+                                FlutterFlowTheme.of(context).labelMedium,
+                            hintStyle: FlutterFlowTheme.of(context).labelMedium,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).alternate,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).primary,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).error,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).error,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          style: FlutterFlowTheme.of(context).bodyMedium,
+                          keyboardType: TextInputType.number,
+                          onChanged: (String newValue) {
+                            setState(() {
+                              currentInitialKmTextFormFieldValue = newValue;
+                            });
+                          },
+                          onTapOutside: (newValue) {
+                            saveTextValue(
+                                currentInitialKmTextFormFieldValue, initialKmController,
+                                (value) {
+                              widget.car.initialKm = int.tryParse(value) ?? 0;
+                            }, () {
+                              initialKmController.text =
+                                  widget.car.initialKm.toString();
+                            });
+                            FocusScope.of(context).unfocus();
+                          },
+                          onFieldSubmitted: (String newValue) {
+                            saveTextValue(
+                                currentInitialKmTextFormFieldValue, initialKmController,
+                                (value) {
+                              widget.car.initialKm = int.tryParse(value) ?? 0;
+                            }, () {
+                              initialKmController.text =
+                                  widget.car.initialKm.toString();
+                            });
+                          },
+                        ),
+                        // Tank size field
+                        TextFormField(
+                          controller: tankSizeController,
+                          autofocus: true,
+                          obscureText: false,
+                          decoration: InputDecoration(
+                            labelText: 'Fuel Tank Size (liters)',
+                            hintText: 'Enter fuel tank size',
+                            labelStyle:
+                                FlutterFlowTheme.of(context).labelMedium,
+                            hintStyle: FlutterFlowTheme.of(context).labelMedium,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).alternate,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).primary,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).error,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).error,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          style: FlutterFlowTheme.of(context).bodyMedium,
+                          keyboardType: TextInputType.number,
+                          onChanged: (String newValue) {
+                            setState(() {
+                              currentTankSizeTextFormFieldValue = newValue;
+                            });
+                          },
+                          onTapOutside: (newValue) {
+                            saveTextValue(
+                                currentTankSizeTextFormFieldValue, tankSizeController,
+                                (value) {
+                              widget.car.tankSize = int.tryParse(value) ?? 0;
+                            }, () {
+                              tankSizeController.text =
+                                  widget.car.tankSize.toString();
+                            });
+                            FocusScope.of(context).unfocus();
+                          },
+                          onFieldSubmitted: (String newValue) {
+                            saveTextValue(
+                                currentTankSizeTextFormFieldValue, tankSizeController,
+                                (value) {
+                              widget.car.tankSize = int.tryParse(value) ?? 0;
+                            }, () {
+                              tankSizeController.text =
+                                  widget.car.tankSize.toString();
+                            });
+                          },
+                        ),
                         //label which displays the current fuel and consumption
                         Padding(
                           padding:
                               const EdgeInsetsDirectional.fromSTEB(0, 12, 0, 0),
                           child: Text(
-                            'Current fuel summary: ${widget.car.fuelSum} liters, consumption: ${widget.car.getConsumption()} liters/100km',
+                            'Current fuel summary: ${widget.car.fuelSum} liters, consumption: ${widget.car.getConsumption()} liters/100km\nEstimated range with full tank: ${widget.car.estimatedRange}',
                             style: FlutterFlowTheme.of(context)
                                 .bodyText1
                                 .override(
@@ -616,54 +758,98 @@ class _AddCarFormState extends State<AddCarForm> {
                     child: Padding(
                       padding:
                           const EdgeInsetsDirectional.fromSTEB(0, 34, 0, 12),
-                      child: FFButtonWidget(
-                        onPressed: () {
-                          setState(() {
-                            if (widget.operation == Operation.add) {
-                              //add new car to current users
-                              //    staticCars.add(widget.car);
-                              widget.car.ownerUsername =
-                                  auth.currentUser!.email!;
-                              addCarEntryToDb(widget.car);
-                            } else if (widget.operation == Operation.modify) {
-                              //    staticCars.remove(widget.car);
-                              removeCarEntryFromDb(widget.car.id);
-                            }
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => MyEntries()));
-                          });
-                        },
-                        text: widget.operation == Operation.modify
-                            ? 'DELETE'
-                            : 'ADD',
-                        icon: const Icon(
-                          Icons.add,
-                          size: 15,
-                        ),
-                        options: FFButtonOptions(
-                          width: 600,
-                          height: 48,
-                          padding:
-                              const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                          iconPadding:
-                              const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                          color: widget.operation == Operation.modify
-                              ? const Color(0xFFEFEFEF)
-                              : FlutterFlowTheme.of(context).primary,
-                          textStyle:
-                              FlutterFlowTheme.of(context).titleSmall.override(
+                      child: Column(
+                        children: [
+                          FFButtonWidget(
+                            onPressed: () {
+                              setState(() {
+                                // Always update car fields from controllers before saving
+                                widget.car.make = makeController.text;
+                                widget.car.model = modelController.text;
+                                widget.car.year = int.tryParse(yearController.text) ?? 0;
+                                widget.car.color = colorController.text;
+                                widget.car.location = locationController.text;
+                                widget.car.type = typeController.text;
+                                widget.car.drivenKm = int.tryParse(kmController.text) ?? 0;
+                                widget.car.initialKm = int.tryParse(initialKmController.text) ?? 0;
+                                widget.car.tankSize = int.tryParse(tankSizeController.text) ?? 0;
+                                if (widget.operation == Operation.add) {
+                                  // Assign a unique id for new entries
+                                  widget.car.id = DateTime.now().millisecondsSinceEpoch;
+                                  widget.car.ownerUsername = auth.currentUser!.email!;
+                                  addCarEntryToDb(widget.car);
+                                } else if (widget.operation == Operation.modify) {
+                                  modifyCarEntryInDb(widget.car);
+                                }
+                                Navigator.of(context).pop();
+                              });
+                            },
+                            text: widget.operation == Operation.modify ? 'SAVE CHANGES' : 'ADD',
+                            icon: widget.operation == Operation.modify
+                                ? const Icon(
+                                    Icons.save,
+                                    size: 15,
+                                    color: Colors.green,
+                                  )
+                                : const Icon(
+                                    Icons.add,
+                                    size: 15,
+                                  ),
+                            options: FFButtonOptions(
+                              width: 600,
+                              height: 48,
+                              padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                              iconPadding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                              color: widget.operation == Operation.modify
+                                  ? const Color(0xFFEFEFEF)
+                                  : FlutterFlowTheme.of(context).primary,
+                              textStyle: FlutterFlowTheme.of(context).titleSmall.override(
                                     fontFamily: 'Readex Pro',
                                     color: widget.operation == Operation.modify
-                                        ? const Color(0xFFFF0800)
+                                        ? const Color(0xFF00C853)
                                         : Colors.white,
                                   ),
-                          elevation: 4,
-                          borderSide: const BorderSide(
-                            color: Colors.transparent,
-                            width: 1,
+                              elevation: 4,
+                              borderSide: const BorderSide(
+                                color: Colors.transparent,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(60),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(60),
-                        ),
+                          if (widget.operation == Operation.modify)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: FFButtonWidget(
+                                onPressed: () {
+                                  // Add your delete logic here if needed
+                                  // removeCarEntryFromDb(widget.car.id); // Uncomment if you have this function
+                                  Navigator.of(context).pop();
+                                },
+                                text: 'DELETE',
+                                icon: const Icon(
+                                  Icons.delete,
+                                  size: 15,
+                                  color: Colors.red,
+                                ),
+                                options: FFButtonOptions(
+                                  width: 600,
+                                  height: 48,
+                                  color: Colors.red.shade100,
+                                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                        fontFamily: 'Readex Pro',
+                                        color: Colors.red,
+                                      ),
+                                  elevation: 2,
+                                  borderSide: const BorderSide(
+                                    color: Colors.transparent,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(60),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

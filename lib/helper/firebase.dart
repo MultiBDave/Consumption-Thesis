@@ -22,6 +22,8 @@ void updateCarEntry(CarEntry CarEntry, String documentID) {
     'type': CarEntry.type,
     'drivenKm': CarEntry.drivenKm,
     'fuelSum': CarEntry.fuelSum,
+    'initialKm': CarEntry.initialKm,
+    'tankSize': CarEntry.tankSize,
   };
   documentReference.set(CarEntryData, SetOptions(merge: true));
 }
@@ -29,17 +31,21 @@ void updateCarEntry(CarEntry CarEntry, String documentID) {
 Future<CarEntry> getCarEntryFromDb(int id) async {
   String docID = await getDocumentID(id, 'CarEntrys');
   var snapshot = await db.collection('CarEntrys').doc(docID).get();
+  final data = snapshot.data()!;
+  
   CarEntry carEntry = CarEntry.fuel(
-    id: snapshot.data()!['id'],
-    model: snapshot.data()!['model'],
-    make: snapshot.data()!['make'],
-    year: snapshot.data()!['year'],
-    color: snapshot.data()!['color'],
-    ownerUsername: snapshot.data()!['ownerUsername'],
-    location: snapshot.data()!['location'],
-    type: snapshot.data()!['type'],
-    drivenKm: snapshot.data()!['drivenKm'],
-    fuelSum: snapshot.data()!['fuelSum'],
+    id: data['id'],
+    model: data['model'],
+    make: data['make'],
+    year: data['year'],
+    color: data['color'],
+    ownerUsername: data['ownerUsername'],
+    location: data['location'],
+    type: data['type'],
+    drivenKm: data['drivenKm'],
+    fuelSum: data['fuelSum'],
+    initialKm: data['initialKm'] ?? 0,
+    tankSize: data['tankSize'] ?? 0,
   );
   return carEntry;
 }
@@ -61,6 +67,8 @@ void addCarEntryToDb(CarEntry CarEntry) {
     'type': CarEntry.type,
     'drivenKm': CarEntry.drivenKm,
     'fuelSum': CarEntry.fuelSum,
+    'initialKm': CarEntry.initialKm,
+    'tankSize': CarEntry.tankSize,
   };
   addDocumentToCollection('CarEntrys', CarEntryData);
 }
@@ -85,17 +93,20 @@ Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
   List<CarEntry> CarEntrys = [];
   QuerySnapshot querySnapshot = await db.collection('CarEntrys').get();
   for (var doc in querySnapshot.docs) {
+    final data = doc.data() as Map<String, dynamic>;
     CarEntrys.add(CarEntry.fuel(
-        id: doc['id'],
-        model: doc['model'],
-        make: doc['make'],
-        year: doc['year'],
-        color: doc['color'],
-        ownerUsername: doc['ownerUsername'],
-        location: doc['location'],
-        type: doc['type'],
-        drivenKm: doc['drivenKm'],
-        fuelSum: doc['fuelSum']));
+        id: data['id'],
+        model: data['model'],
+        make: data['make'],
+        year: data['year'],
+        color: data['color'],
+        ownerUsername: data['ownerUsername'],
+        location: data['location'],
+        type: data['type'],
+        drivenKm: data['drivenKm'],
+        fuelSum: data['fuelSum'],
+        initialKm: data['initialKm'] ?? 0,
+        tankSize: data['tankSize'] ?? 0));
   }
   return CarEntrys;
 }
