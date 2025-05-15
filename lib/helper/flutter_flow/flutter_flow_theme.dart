@@ -595,27 +595,51 @@
 //     Color? color,
 //     double? fontSize,
 //     FontWeight? fontWeight,
+//     double? letterSpacing,
 //     FontStyle? fontStyle,
 //     bool useGoogleFonts = true,
+//     TextDecoration? decoration,
 //     double? lineHeight,
-//   }) =>
-//       fontFamily != null && fontFamily != 'Product Sans' && useGoogleFonts
-//           ? GoogleFonts.getFont(
-//         fontFamily,
-//         color: color ?? this.color,
-//         fontSize: fontSize ?? this.fontSize,
-//         fontWeight: fontWeight ?? this.fontWeight,
-//         fontStyle: fontStyle ?? this.fontStyle,
-//         height: lineHeight,
-//       )
-//           : copyWith(
-//         fontFamily: fontFamily,
+//   }) {
+//     final resolvedFontFamily = fontFamily ?? this.fontFamily ?? 'Readex Pro';
+//     if (useGoogleFonts && resolvedFontFamily.isNotEmpty) {
+//       try {
+//         return GoogleFonts.getFont(
+//           resolvedFontFamily,
+//           color: color ?? this.color,
+//           fontSize: fontSize ?? this.fontSize,
+//           letterSpacing: letterSpacing ?? this.letterSpacing,
+//           fontWeight: fontWeight ?? this.fontWeight,
+//           fontStyle: fontStyle ?? this.fontStyle,
+//           decoration: decoration,
+//           height: lineHeight,
+//         );
+//       } catch (e) {
+//         // Fallback to default font if GoogleFonts fails
+//         return copyWith(
+//           fontFamily: null,
+//           color: color,
+//           fontSize: fontSize,
+//           letterSpacing: letterSpacing,
+//           fontWeight: fontWeight,
+//           fontStyle: fontStyle,
+//           decoration: decoration,
+//           height: lineHeight,
+//         );
+//       }
+//     } else {
+//       return copyWith(
+//         fontFamily: resolvedFontFamily,
 //         color: color,
 //         fontSize: fontSize,
+//         letterSpacing: letterSpacing,
 //         fontWeight: fontWeight,
 //         fontStyle: fontStyle,
+//         decoration: decoration,
 //         height: lineHeight,
 //       );
+//     }
+//   }
 // }
 //
 // ThemeData darkFlutterTheme(BuildContext context) =>
@@ -945,26 +969,44 @@ extension TextStyleHelper on TextStyle {
     bool useGoogleFonts = true,
     TextDecoration? decoration,
     double? lineHeight,
-  }) =>
-      useGoogleFonts
-          ? GoogleFonts.getFont(
-              fontFamily!,
-              color: color ?? this.color,
-              fontSize: fontSize ?? this.fontSize,
-              letterSpacing: letterSpacing ?? this.letterSpacing,
-              fontWeight: fontWeight ?? this.fontWeight,
-              fontStyle: fontStyle ?? this.fontStyle,
-              decoration: decoration,
-              height: lineHeight,
-            )
-          : copyWith(
-              fontFamily: fontFamily,
-              color: color,
-              fontSize: fontSize,
-              letterSpacing: letterSpacing,
-              fontWeight: fontWeight,
-              fontStyle: fontStyle,
-              decoration: decoration,
-              height: lineHeight,
-            );
+  }) {
+    final resolvedFontFamily = fontFamily ?? this.fontFamily ?? 'Readex Pro';
+    if (useGoogleFonts && resolvedFontFamily.isNotEmpty) {
+      try {
+        return GoogleFonts.getFont(
+          resolvedFontFamily,
+          color: color ?? this.color,
+          fontSize: fontSize ?? this.fontSize,
+          letterSpacing: letterSpacing ?? this.letterSpacing,
+          fontWeight: fontWeight ?? this.fontWeight,
+          fontStyle: fontStyle ?? this.fontStyle,
+          decoration: decoration,
+          height: lineHeight,
+        );
+      } catch (e) {
+        // Fallback to default font if GoogleFonts fails
+        return copyWith(
+          fontFamily: null,
+          color: color,
+          fontSize: fontSize,
+          letterSpacing: letterSpacing,
+          fontWeight: fontWeight,
+          fontStyle: fontStyle,
+          decoration: decoration,
+          height: lineHeight,
+        );
+      }
+    } else {
+      return copyWith(
+        fontFamily: resolvedFontFamily,
+        color: color,
+        fontSize: fontSize,
+        letterSpacing: letterSpacing,
+        fontWeight: fontWeight,
+        fontStyle: fontStyle,
+        decoration: decoration,
+        height: lineHeight,
+      );
+    }
+  }
 }
