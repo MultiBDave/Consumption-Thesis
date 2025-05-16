@@ -24,6 +24,9 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
 
   List<String> makes = [];
   List<String> models = [];
+  late Map<String, List<String>> modelsByMake = {};
+  String currentMakeTextFormFieldValue = '';
+  String currentModelTextFormFieldValue = '';
 
   List<String> colorList = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
   List<String> carList = [
@@ -62,6 +65,12 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // New state variables for CSV makes/models
+  List<String> csvMakes = [];
+  Map<String, List<String>> csvModelsByMake = {};
+  String currentMakeFilter = '';
+  String currentModelFilter = '';
+
   // Helper function to convert color string to Color
   Color getColorFromString(String colorName) {
     switch (colorName.toLowerCase()) {
@@ -90,14 +99,32 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
 
   @override
   void initState() {
-    isLoggedIn = FirebaseAuth.instance.currentUser != null;
     super.initState();
+    isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    loadCsvData();
     _loadCarEntryData().then((value) {
       setState(() {
         filteredAllCars = value;
         allCars = value;
       });
     });
+  }
+
+  Future<void> loadCsvData() async {
+    final rawData = await rootBundle.loadString('assets/csv/2020.csv');
+    final lines = rawData.split('\n');
+    final header = lines.first.split(',');
+    final int makeIndex = header.indexOf('make');
+    final int modelIndex = header.indexOf('model');
+    for (var i = 1; i < lines.length; i++) {
+      final cols = lines[i].split(',');
+      if (cols.length <= modelIndex) continue;
+      final make = cols[makeIndex];
+      final model = cols[modelIndex];
+      if (!makes.contains(make)) makes.add(make);
+      modelsByMake.putIfAbsent(make, () => []);
+      if (!modelsByMake[make]!.contains(model)) modelsByMake[make]!.add(model);
+    }
   }
 
   void filterCars() {
@@ -148,6 +175,18 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
           .where((car) => car.type == typeController.text)
           .toList();
     }
+    // Filter by Make
+    if (currentMakeTextFormFieldValue.isNotEmpty) {
+      deeperFilteredCars = deeperFilteredCars
+          .where((car) => car.make == currentMakeTextFormFieldValue)
+          .toList();
+    }
+    // Filter by Model
+    if (currentModelTextFormFieldValue.isNotEmpty) {
+      deeperFilteredCars = deeperFilteredCars
+          .where((car) => car.model == currentModelTextFormFieldValue)
+          .toList();
+    }
 
     // Filter by Min-Max Year
     deeperFilteredCars = deeperFilteredCars
@@ -173,6 +212,8 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
       typeController.clear();
       currentYearMinValue = 1900;
       currentYearMaxValue = DateTime.now().year;
+      currentMakeTextFormFieldValue = '';
+      currentModelTextFormFieldValue = '';
       filteredAllCars = allCars;
     });
   }
@@ -443,240 +484,240 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.filter_list),
-              SizedBox(width: 8),
-              Text('Filter vehicles'),
-            ],
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(VoidCallback) setStateDialog) {
+            return AlertDialog(
+              title: const Row(
                 children: [
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Color',
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).alternate,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    value: currentColorTextFormFieldValue.isEmpty ? null : currentColorTextFormFieldValue,
-                    items: [
-                      const DropdownMenuItem(
-                        value: '',
-                        child: Text('All colors'),
-                      ),
-                      ...colorList.map((color) => DropdownMenuItem(
-                            value: color,
-                            child: Text(color),
-                          )),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        currentColorTextFormFieldValue = value ?? '';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Type',
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).alternate,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    value: typeController.text.isEmpty ? null : typeController.text,
-                    items: [
-                      const DropdownMenuItem(
-                        value: '',
-                        child: Text('All types'),
-                      ),
-                      ...carList.map((type) => DropdownMenuItem(
-                            value: type,
-                            child: Text(type),
-                          )),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        typeController.text = value ?? '';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: locationController,
-                    decoration: InputDecoration(
-                      labelText: 'Location',
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: FlutterFlowTheme.of(context).alternate,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Mileage range', style: FlutterFlowTheme.of(context).labelLarge),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: minKmController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Min km',
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: maxKmController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Max km',
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Year range', style: FlutterFlowTheme.of(context).labelLarge),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: minYearController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Min Year',
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              setState(() {
-                                currentYearMinValue = int.tryParse(value) ?? currentYearMinValue;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: maxYearController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Max Year',
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: FlutterFlowTheme.of(context).alternate,
-                                width: 2,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              setState(() {
-                                currentYearMaxValue = int.tryParse(value) ?? currentYearMaxValue;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  RangeSlider(
-                    values: RangeValues(
-                      currentYearMinValue.toDouble(),
-                      currentYearMaxValue.toDouble(),
-                    ),
-                    min: 1900,
-                    max: DateTime.now().year.toDouble(),
-                    divisions: DateTime.now().year - 1900,
-                    labels: RangeLabels(
-                      currentYearMinValue.toString(),
-                      currentYearMaxValue.toString(),
-                    ),
-                    onChanged: (RangeValues values) {
-                      setState(() {
-                        currentYearMinValue = values.start.round();
-                        currentYearMaxValue = values.end.round();
-                        // Update text controllers to reflect slider values
-                        minYearController.text = currentYearMinValue.toString();
-                        maxYearController.text = currentYearMaxValue.toString();
-                      });
-                    },
-                  ),
+                  Icon(Icons.filter_list),
+                  SizedBox(width: 8),
+                  Text('Filter vehicles'),
                 ],
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Reset'),
-              onPressed: () {
-                resetFilters();
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: FlutterFlowTheme.of(context).primary,
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                     DropdownButtonFormField<String>(
+                       decoration: InputDecoration(
+                         labelText: 'Make',
+                         enabledBorder: OutlineInputBorder(
+                           borderSide: BorderSide(
+                             color: FlutterFlowTheme.of(context).alternate,
+                             width: 2,
+                           ),
+                           borderRadius: BorderRadius.circular(8),
+                         ),
+                       ),
+                       value: currentMakeTextFormFieldValue.isEmpty ? null : currentMakeTextFormFieldValue,
+                       items: [
+                         const DropdownMenuItem(value: '', child: Text('All makes')),
+                         ...makes.map((make) => DropdownMenuItem(value: make, child: Text(make))),
+                       ],
+                       onChanged: (value) {
+                         setStateDialog(() {
+                           currentMakeTextFormFieldValue = value ?? ''; models = modelsByMake[currentMakeTextFormFieldValue] ?? []; currentModelTextFormFieldValue = '';
+                         });
+                       },
+                     ),
+                     const SizedBox(height: 12),
+                     DropdownButtonFormField<String>(
+                       decoration: InputDecoration(
+                         labelText: 'Model',
+                         enabledBorder: OutlineInputBorder(
+                           borderSide: BorderSide(
+                             color: FlutterFlowTheme.of(context).alternate,
+                             width: 2,
+                           ),
+                           borderRadius: BorderRadius.circular(8),
+                         ),
+                       ),
+                       value: currentModelTextFormFieldValue.isEmpty ? null : currentModelTextFormFieldValue,
+                       items: [
+                         const DropdownMenuItem(value: '', child: Text('All models')),
+                         ...models.map((model) => DropdownMenuItem(value: model, child: Text(model))),
+                       ],
+                       onChanged: (value) {
+                         setStateDialog(() {
+                           currentModelTextFormFieldValue = value ?? '';
+                         });
+                       },
+                     ),
+                     const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Color',
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).alternate,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        value: currentColorTextFormFieldValue.isEmpty ? null : currentColorTextFormFieldValue,
+                        items: [
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('All colors'),
+                          ),
+                          ...colorList.map((color) => DropdownMenuItem(
+                                value: color,
+                                child: Text(color),
+                              )),
+                        ],
+                        onChanged: (value) {
+                         setStateDialog(() {
+                            currentColorTextFormFieldValue = value ?? '';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Type',
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).alternate,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        value: typeController.text.isEmpty ? null : typeController.text,
+                        items: [
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('All types'),
+                          ),
+                          ...carList.map((type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(type),
+                              )),
+                        ],
+                        onChanged: (value) {
+                         setStateDialog(() {
+                            typeController.text = value ?? '';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                         controller: locationController,
+                         decoration: InputDecoration(
+                           labelText: 'Location',
+                           enabledBorder: OutlineInputBorder(
+                             borderSide: BorderSide(
+                               color: FlutterFlowTheme.of(context).alternate,
+                               width: 2,
+                             ),
+                             borderRadius: BorderRadius.circular(8),
+                           ),
+                         ),
+                         onChanged:(v){setStateDialog((){});}
+                       ),
+                       const SizedBox(height: 16),
+                      Text('Mileage range', style: FlutterFlowTheme.of(context).labelLarge),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: minKmController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Min km',
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: FlutterFlowTheme.of(context).alternate,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onChanged: (v) => setStateDialog(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: maxKmController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Max km',
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: FlutterFlowTheme.of(context).alternate,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onChanged: (v) => setStateDialog(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Year range', style: FlutterFlowTheme.of(context).labelLarge),
+                      const SizedBox(height: 12),
+                      RangeSlider(
+                        values: RangeValues(
+                          currentYearMinValue.toDouble(),
+                          currentYearMaxValue.toDouble(),
+                        ),
+                        min: 1900,
+                        max: DateTime.now().year.toDouble(),
+                        divisions: DateTime.now().year - 1900,
+                        labels: RangeLabels(
+                          currentYearMinValue.toString(),
+                          currentYearMaxValue.toString(),
+                        ),
+                        onChanged: (RangeValues values) {
+                         setStateDialog(() {
+                            currentYearMinValue = values.start.round();
+                            currentYearMaxValue = values.end.round();
+                            minYearController.text = currentYearMinValue.toString();
+                            maxYearController.text = currentYearMaxValue.toString();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              onPressed: () {
-                setState(() {
-                  filterCars();
-                });
-                Navigator.of(context).pop();
-              },
-              child: Text('Apply'),
-            ),
-          ],
-        );
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Reset'),
+                  onPressed: () {
+                    resetFilters();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: FlutterFlowTheme.of(context).primary,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      filterCars();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Apply'),
+                ),
+              ],
+            );
+         }
+       );
       },
     );
   }
