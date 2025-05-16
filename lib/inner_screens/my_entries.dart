@@ -530,26 +530,11 @@ class _MyEntriesState extends State<MyEntries> {
                                                 onChanged: (val) => ownCars[index].type = val,
                                               ),
                                               const SizedBox(height: 12),
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller: TextEditingController(text: ownCars[index].drivenKm.toString()),
-                                                      decoration: const InputDecoration(labelText: 'Odometer (km)', border: OutlineInputBorder()),
-                                                      keyboardType: TextInputType.number,
-                                                      onChanged: (val) => ownCars[index].drivenKm = int.tryParse(val) ?? ownCars[index].drivenKm,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller: TextEditingController(text: ownCars[index].initialKm.toString()),
-                                                      decoration: const InputDecoration(labelText: 'Initial km', border: OutlineInputBorder()),
-                                                      keyboardType: TextInputType.number,
-                                                      onChanged: (val) => ownCars[index].initialKm = int.tryParse(val) ?? ownCars[index].initialKm,
-                                                    ),
-                                                  ),
-                                                ],
+                                              TextField(
+                                                controller: TextEditingController(text: ownCars[index].initialKm.toString()),
+                                                decoration: const InputDecoration(labelText: 'Initial km', border: OutlineInputBorder()),
+                                                keyboardType: TextInputType.number,
+                                                onChanged: (val) => ownCars[index].initialKm = int.tryParse(val) ?? ownCars[index].initialKm,
                                               ),
                                               const SizedBox(height: 12),
                                               TextField(
@@ -691,24 +676,15 @@ class _MyEntriesState extends State<MyEntries> {
                             onChanged: (val) => newCar.type = val!,
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  decoration: const InputDecoration(labelText: 'Odometer (km)', border: OutlineInputBorder()),
-                                  keyboardType: TextInputType.number,
-                                  onChanged: (val) => newCar.drivenKm = int.tryParse(val) ?? 0,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  decoration: const InputDecoration(labelText: 'Initial km', border: OutlineInputBorder()),
-                                  keyboardType: TextInputType.number,
-                                  onChanged: (val) => newCar.initialKm = int.tryParse(val) ?? 0,
-                                ),
-                              ),
-                            ],
+                          // Only initial km input; drivenKm defaults to initialKm
+                          TextField(
+                            decoration: const InputDecoration(labelText: 'Initial km (km)', border: OutlineInputBorder()),
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) {
+                              final km = int.tryParse(val) ?? 0;
+                              newCar.initialKm = km;
+                              newCar.drivenKm = km;
+                            },
                           ),
                           const SizedBox(height: 12),
                           // Tank size defaulted from CSV, editable
