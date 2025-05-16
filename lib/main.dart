@@ -26,7 +26,7 @@ final db = FirebaseFirestore.instance;
 bool isLoggedIn = false;
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -76,8 +76,8 @@ class _MyAppState extends State<MyApp> {
         HomeScreen.id: (context) => const HomeScreen(),
         LoginScreen.id: (context) => const LoginScreen(),
         SignUpScreen.id: (context) => const SignUpScreen(),
-        HomePage.id: (context) => HomePage(),
-        ListCarsScreen.id: (context) => ListCarsScreen(),
+        HomePage.id: (context) => const HomePage(),
+        ListCarsScreen.id: (context) => const ListCarsScreen(),
       },
     );
   }

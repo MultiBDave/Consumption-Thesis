@@ -5,7 +5,7 @@ import 'package:swipeable_card_stack/swipeable_card_stack.dart';
 
 class FlutterFlowSwipeableStack extends StatefulWidget {
   const FlutterFlowSwipeableStack({
-    Key? key,
+    super.key,
     required this.topCardHeightFraction,
     required this.middleCardHeightFraction,
     required this.bottomCardHeightFraction,
@@ -22,7 +22,7 @@ class FlutterFlowSwipeableStack extends StatefulWidget {
     required this.onLeftSwipe,
     required this.onUpSwipe,
     required this.onDownSwipe,
-  }) : super(key: key);
+  });
 
   final double topCardHeightFraction;
   final double middleCardHeightFraction;

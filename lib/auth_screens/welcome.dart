@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../components/components.dart';
-import '../inner_screens/list_cars.dart';
 import '../main.dart';
-import 'home_screen.dart';
 
 bool back_office = false;
 

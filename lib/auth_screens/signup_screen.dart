@@ -109,19 +109,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   final newUser = await _auth
                                       .createUserWithEmailAndPassword(
                                           email: _email, password: _password);
-                                  if (newUser != null) {
-                                    db
-                                        .collection('users')
-                                        .doc(newUser.user!.uid)
-                                        .set({
-                                      'id': newUser.user!.uid,
-                                      'email': _email,
-                                      'roleId': 'undefined',
-                                      'role': 'undefined',
-                                      'approved': false,
-                                    });
-                                  }
-                                  if (context.mounted) {
+                                  db
+                                      .collection('users')
+                                      .doc(newUser.user!.uid)
+                                      .set({
+                                    'id': newUser.user!.uid,
+                                    'email': _email,
+                                    'roleId': 'undefined',
+                                    'role': 'undefined',
+                                    'approved': false,
+                                  });
+                                                                  if (context.mounted) {
                                     signUpAlert(
                                       context: context,
                                       title: 'GOOD JOB',

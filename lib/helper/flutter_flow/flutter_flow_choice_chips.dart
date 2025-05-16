@@ -35,7 +35,7 @@ class ChipStyle {
 }
 
 class FlutterFlowChoiceChips extends StatefulWidget {
-  const FlutterFlowChoiceChips({
+  const FlutterFlowChoiceChips({super.key,
     required this.options,
     required this.onChanged,
     required this.controller,
@@ -158,7 +158,7 @@ class _FlutterFlowChoiceChipsState extends State<FlutterFlowChoiceChips> {
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               );
             },
-          ).toList(),
+          ),
         ],
       );
 }

@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 class PersistentBottomBarScaffold extends StatefulWidget {
   final List<PersistentTabItem> items;
 
-  const PersistentBottomBarScaffold({Key? key, required this.items})
-      : super(key: key);
+  const PersistentBottomBarScaffold({super.key, required this.items});
 
   @override
   _PersistentBottomBarScaffoldState createState() =>
@@ -33,14 +32,14 @@ class _PersistentBottomBarScaffoldState
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Login required"),
-          content: Text("You need to be logged in to access this feature."),
+          title: const Text("Login required"),
+          content: const Text("You need to be logged in to access this feature."),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         ),

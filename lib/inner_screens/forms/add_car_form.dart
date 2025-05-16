@@ -310,7 +310,7 @@ class _AddCarFormState extends State<AddCarForm> {
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     title: const Text('Select year'),
-                                    content: Container(
+                                    content: SizedBox(
                                       width: double.maxFinite,
                                       child: ListView.builder(
                                         shrinkWrap: true,

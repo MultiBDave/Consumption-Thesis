@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FlutterFlowCheckboxGroup extends StatefulWidget {
-  const FlutterFlowCheckboxGroup({
+  const FlutterFlowCheckboxGroup({super.key,
     this.initiallySelected,
     required this.options,
     required this.onChanged,

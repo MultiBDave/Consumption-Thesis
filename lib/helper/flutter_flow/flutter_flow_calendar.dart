@@ -28,7 +28,7 @@ bool isSameMonth(DateTime? a, DateTime? b) {
 
 class FlutterFlowCalendar extends StatefulWidget {
   const FlutterFlowCalendar({
-    Key? key,
+    super.key,
     required this.color,
     this.onChange,
     this.initialDate,
@@ -42,7 +42,7 @@ class FlutterFlowCalendar extends StatefulWidget {
     this.titleStyle,
     this.rowHeight,
     this.locale,
-  }) : super(key: key);
+  });
 
   final bool weekFormat;
   final bool weekStartsMonday;
@@ -147,9 +147,9 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                 widget.rowHeight ?? MediaQuery.of(context).size.width / 7,
             calendarStyle: CalendarStyle(
               weekendTextStyle: widget.dateStyle ??
-                  const TextStyle(color: const Color(0xFF5A5A5A)),
+                  const TextStyle(color: Color(0xFF5A5A5A)),
               holidayTextStyle: widget.dateStyle ??
-                  const TextStyle(color: const Color(0xFF5C6BC0)),
+                  const TextStyle(color: Color(0xFF5C6BC0)),
               selectedTextStyle:
                   const TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0)
                       .merge(widget.selectedDateStyle),
@@ -196,7 +196,7 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
 
 class CalendarHeader extends StatelessWidget {
   const CalendarHeader({
-    Key? key,
+    super.key,
     required this.focusedDay,
     required this.onLeftChevronTap,
     required this.onRightChevronTap,
@@ -204,7 +204,7 @@ class CalendarHeader extends StatelessWidget {
     this.iconColor,
     this.titleStyle,
     this.locale,
-  }) : super(key: key);
+  });
 
   final DateTime focusedDay;
   final VoidCallback onLeftChevronTap;
@@ -250,12 +250,12 @@ class CalendarHeader extends StatelessWidget {
 
 class CustomIconButton extends StatelessWidget {
   const CustomIconButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.onTap,
     this.margin = const EdgeInsets.symmetric(horizontal: 4),
     this.padding = const EdgeInsets.all(10),
-  }) : super(key: key);
+  });
 
   final Icon icon;
   final VoidCallback onTap;

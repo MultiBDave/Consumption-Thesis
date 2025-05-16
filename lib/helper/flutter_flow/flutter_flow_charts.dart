@@ -9,7 +9,7 @@ export 'package:fl_chart/fl_chart.dart'
 
 class FlutterFlowLineChart extends StatelessWidget {
   const FlutterFlowLineChart(
-      {Key? key,
+      {super.key,
       required this.data,
       required this.xAxisLabelInfo,
       required this.yAxisLabelInfo,
@@ -17,8 +17,7 @@ class FlutterFlowLineChart extends StatelessWidget {
       this.showGrid = false,
       this.enableTooltip = false,
       this.tooltipBackgroundColor,
-      required this.axisBounds})
-      : super(key: key);
+      required this.axisBounds});
 
   final List<FFLineChartData> data;
   final AxisLabelInfo xAxisLabelInfo;
@@ -64,8 +63,8 @@ class FlutterFlowLineChart extends StatelessWidget {
                 interval: xAxisLabelInfo.labelInterval,
               ),
             ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             leftTitles: AxisTitles(
               axisNameWidget: yAxisLabelInfo.title.isEmpty
                   ? null

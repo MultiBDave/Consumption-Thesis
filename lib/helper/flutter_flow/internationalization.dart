@@ -9,7 +9,7 @@ class FFLocalizations {
 
   //Initializing
   static FFLocalizations of(BuildContext context) =>
-      FFLocalizations(Locale('en'));
+      FFLocalizations(const Locale('en'));
 
   static List<String> languages() => ['en'];
 
