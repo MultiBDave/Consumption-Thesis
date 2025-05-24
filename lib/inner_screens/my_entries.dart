@@ -1,7 +1,12 @@
+import 'package:consumption/auth_screens/login_screen.dart';
+import 'package:consumption/home_page.dart';
 import 'package:consumption/inner_screens/car_fuel_entries_screen.dart';
+import 'package:consumption/inner_screens/forms/add_car_form.dart';
+import 'package:consumption/inner_screens/list_cars.dart';
 import 'package:consumption/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/services.dart';
 
 import '../auth_screens/home_screen.dart';
@@ -117,7 +122,7 @@ class _MyEntriesState extends State<MyEntries> {
     csvMakes = csvRecords.map((e) => e.make).toSet().toList()..sort();
     for (var r in csvRecords) {
       csvModelsByMake.putIfAbsent(r.make, () => []).add(r.model);
-      csvTankByMakeModel['${r.make}|${r.model}'] = r.fuelTankSize;
+      csvTankByMakeModel['${r.make}|${r.model}'] = r.fuelTankSize;
     }
     csvModelsByMake.updateAll((k, v) => v.toSet().toList()..sort());
     setState(() {});
@@ -371,9 +376,11 @@ class _MyEntriesState extends State<MyEntries> {
                                 size: 20,
                               ),
                               onPressed: () {
+                                // Capture the scaffold messenger before showing the dialog to avoid context issues
+                                final scaffoldMessenger = ScaffoldMessenger.of(context);
                                 showDialog(
                                     context: context,
-                                    builder: (BuildContext context) {
+                                    builder: (BuildContext dialogContext) {
                                       fuelController.clear();
                                       distanceController.text = car.drivenKm.toString();
                                       return AlertDialog(
@@ -446,14 +453,14 @@ class _MyEntriesState extends State<MyEntries> {
                                         actions: [
                                           TextButton(
                                               onPressed: () {
-                                                Navigator.of(context).pop();
+                                                Navigator.of(dialogContext).pop();
                                               },
                                               child: const Text('Cancel')),
                                           TextButton(
                                               onPressed: () async {
                                                 if (fuelController.text.isEmpty ||
                                                     distanceController.text.isEmpty) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  scaffoldMessenger.showSnackBar(
                                                     const SnackBar(content: Text('Please fill in all fields'))
                                                   );
                                                   return;
@@ -481,10 +488,15 @@ class _MyEntriesState extends State<MyEntries> {
                                                   // Update the car in the database
                                                   await modifyCarEntryInDb(car);
 
-                                                  Navigator.of(context).pop();
+                                                  Navigator.of(dialogContext).pop();
+                                                  
+                                                  // Show success message using captured scaffold messenger
+                                                  scaffoldMessenger.showSnackBar(
+                                                    const SnackBar(content: Text('Fuel entry added successfully!'))
+                                                  );
                                                 } catch (e) {
                                                   print("Error adding fuel entry: $e");
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  scaffoldMessenger.showSnackBar(
                                                     SnackBar(content: Text('Error: ${e.toString()}')),
                                                   );
                                                 }
@@ -635,151 +647,139 @@ class _MyEntriesState extends State<MyEntries> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-  onPressed: () async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        CarEntry newCar = CarEntry.empty();
-        int selectedYear = DateTime.now().year;
-        String? selectedMake;
-        String? selectedModel;
-        final tankController = TextEditingController();
-        
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Add Vehicle',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-                      ),
-                      const SizedBox(height: 16),
-                      // Year dropdown
-                      DropdownButtonFormField<int>(
-                        decoration: const InputDecoration(labelText: 'Year', border: OutlineInputBorder()),
-                        value: selectedYear,
-                        items: yearRange.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
-                        onChanged: (val) => setStateDialog(() {
-                          selectedYear = val!;
-                          newCar.year = selectedYear;
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      // Make dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Make', border: OutlineInputBorder()),
-                        value: selectedMake,
-                        items: csvMakes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
-                        onChanged: (val) => setStateDialog(() {
-                          selectedMake = val;
-                          newCar.make = val ?? '';
-                          selectedModel = null;
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      // Model dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
-                        value: selectedModel,
-                        items: selectedMake != null && csvModelsByMake.containsKey(selectedMake)
-                            ? csvModelsByMake[selectedMake!]!
-                                .map((mo) => DropdownMenuItem(value: mo, child: Text(mo)))
-                                .toList()
-                            : <DropdownMenuItem<String>>[],
-                        onChanged: (val) => setStateDialog(() {
-                          selectedModel = val;
-                          newCar.model = val ?? '';
-                          final key = '${newCar.make}|${newCar.model}';
-                          final defaultTank = csvTankByMakeModel[key] ?? 0.0;
-                          newCar.tankSize = defaultTank.round();
-                          tankController.text = newCar.tankSize.toString();
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      // Color input
-                      TextField(
-                        decoration: const InputDecoration(labelText: 'Color', border: OutlineInputBorder()),
-                        onChanged: (val) => newCar.color = val,
-                      ),
-                      const SizedBox(height: 12),
-                      // Type dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                        items: carTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                        onChanged: (val) => newCar.type = val ?? '',
-                      ),
-                      const SizedBox(height: 12),
-                      // Only initial km input; drivenKm defaults to initialKm
-                      TextField(
-                        decoration: const InputDecoration(labelText: 'Initial km (km)', border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number,
-                        onChanged: (val) {
-                          final km = int.tryParse(val) ?? 0;
-                          newCar.initialKm = km;
-                          newCar.drivenKm = km;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Tank size defaulted from CSV, editable
-                      TextField(
-                        controller: tankController,
-                        decoration: const InputDecoration(labelText: 'Tank size (L)', border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number,
-                        onChanged: (val) => newCar.tankSize = int.tryParse(val) ?? newCar.tankSize,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        onPressed: () async {
+          await showDialog(
+            context: context,
+            builder: (context) {
+              CarEntry newCar = CarEntry.empty();
+              int selectedYear = DateTime.now().year;
+              String? selectedMake;
+              String? selectedModel;
+              final tankController = TextEditingController();
+              return StatefulBuilder(
+                builder: (context, setStateDialog) {
+                  return Dialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Add Vehicle',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
                             ),
-                            onPressed: () {
-                              // Validate required fields
-                              if (newCar.make.isEmpty || newCar.model.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please select make and model')),
-                                );
-                                return;
-                              }
-                              
-                              setState(() {
-                                newCar.id = DateTime.now().millisecondsSinceEpoch;
-                                newCar.ownerUsername = auth.currentUser!.email!;
-                                addCarEntryToDb(newCar);
-                              });
-                              Navigator.of(context).pop();
-                              _refreshCarList();
-                            },
-                            child: const Text('Add'),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            // Year dropdown
+                            DropdownButtonFormField<int>(
+                              decoration: const InputDecoration(labelText: 'Year', border: OutlineInputBorder()),
+                              value: selectedYear,
+                              items: yearRange.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
+                              onChanged: (val) => setStateDialog(() {
+                                selectedYear = val!;
+                                newCar.year = selectedYear;
+                              }),
+                            ),
+                            const SizedBox(height: 12),
+                            // Make dropdown
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(labelText: 'Make', border: OutlineInputBorder()),
+                              items: csvMakes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                              onChanged: (val) => setStateDialog(() {
+                                selectedMake = val;
+                                newCar.make = val!;
+                                selectedModel = null;
+                              }),
+                            ),
+                            const SizedBox(height: 12),
+                            // Model dropdown
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
+                              items: selectedMake != null
+                                  ? csvModelsByMake[selectedMake!]!
+                                      .map((mo) => DropdownMenuItem(value: mo, child: Text(mo)))
+                                      .toList()
+                                  : [],
+                              onChanged: (val) => setStateDialog(() {
+                                selectedModel = val;
+                                newCar.model = val!;
+                                final key = '${newCar.make}|${newCar.model}';
+                                final defaultTank = csvTankByMakeModel[key] ?? 0.0;
+                                newCar.tankSize = defaultTank.round();
+                                tankController.text = newCar.tankSize.toString();
+                              }),
+                            ),
+                            const SizedBox(height: 12),
+                            // Color input
+                            TextField(
+                              decoration: const InputDecoration(labelText: 'Color', border: OutlineInputBorder()),
+                              onChanged: (val) => newCar.color = val,
+                            ),
+                            const SizedBox(height: 12),
+                            // Type dropdown
+                            DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                              items: carTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                              onChanged: (val) => newCar.type = val!,
+                            ),
+                            const SizedBox(height: 12),
+                            // Only initial km input; drivenKm defaults to initialKm
+                            TextField(
+                              decoration: const InputDecoration(labelText: 'Initial km (km)', border: OutlineInputBorder()),
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) {
+                                final km = int.tryParse(val) ?? 0;
+                                newCar.initialKm = km;
+                                newCar.drivenKm = km;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            // Tank size defaulted from CSV, editable
+                            TextField(
+                              controller: tankController,
+                              decoration: const InputDecoration(labelText: 'Tank size (L)', border: OutlineInputBorder()),
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) => newCar.tankSize = int.tryParse(val) ?? newCar.tankSize,
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      newCar.id = DateTime.now().millisecondsSinceEpoch;
+                                      newCar.ownerUsername = auth.currentUser!.email!;
+                                      addCarEntryToDb(newCar);
+                                    });
+                                    Navigator.of(context).pop();
+                                    _refreshCarList();
+                                  },
+                                  child: const Text('Add'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  },
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
         backgroundColor: FlutterFlowTheme.of(context).primary,
         elevation: 4,
         child: const Icon(

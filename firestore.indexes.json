@@ -1,4 +1,13 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "FuelEntries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "carId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

@@ -24,6 +24,13 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
     super.initState();
     _loadFuelEntries();
   }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data whenever the screen is displayed
+    _loadFuelEntries();
+  }
 
   Future<void> _loadFuelEntries() async {
     setState(() {
@@ -111,6 +118,8 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
   }
 
   void _showAddEditFuelDialog({FuelEntry? existingEntry}) {
+    // Capture active context for SnackBars to avoid deactivated widget errors
+    final BuildContext parentContext = context;
     final isEditing = existingEntry != null;
     final TextEditingController fuelAmountController = TextEditingController(
       text: isEditing ? existingEntry.fuelAmount.toString() : '',
@@ -177,25 +186,21 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
           ),
           TextButton(
             onPressed: () async {
-              if (fuelAmountController.text.isEmpty ||
-                  odometerController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+              if (fuelAmountController.text.isEmpty || odometerController.text.isEmpty) {
+                // Use parentContext for active Scaffold
+                ScaffoldMessenger.of(parentContext).showSnackBar(
                   const SnackBar(content: Text('Please fill in all fields')),
                 );
                 return;
               }
-
               try {
                 final fuelAmount = int.parse(fuelAmountController.text);
                 final odometer = int.parse(odometerController.text);
-
                 if (isEditing) {
-                  // Update existing entry
                   existingEntry.fuelAmount = fuelAmount;
                   existingEntry.odometer = odometer;
                   await updateFuelEntry(existingEntry);
                 } else {
-                  // Create new entry
                   final newEntry = FuelEntry(
                     id: DateTime.now().millisecondsSinceEpoch,
                     carId: widget.car.id,
@@ -205,13 +210,13 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                   );
                   await addFuelEntryToDb(newEntry);
                 }
-
-                // Refresh entries and update car's data
-                Navigator.of(context).pop();
+                // Refresh entries and recalc before closing dialog
                 await _loadFuelEntries();
                 await updateCarConsumption();
+                Navigator.of(context).pop();
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                // Use parentContext for active Scaffold
+                ScaffoldMessenger.of(parentContext).showSnackBar(
                   SnackBar(content: Text('Error: $e')),
                 );
               }
@@ -378,7 +383,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddEditFuelDialog,
+        onPressed: () => _showAddEditFuelDialog(),
         child: const Icon(Icons.add),
         backgroundColor: FlutterFlowTheme.of(context).primary,
       ),
