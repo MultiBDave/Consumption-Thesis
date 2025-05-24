@@ -6,11 +6,11 @@ import '../../helper/custom_app_bar.dart';
 import '../../helper/firebase.dart';
 import '../../helper/flutter_flow/flutter_flow_theme.dart';
 import '../../helper/flutter_flow/flutter_flow_widgets.dart';
-import '../my_entries.dart';
+import '../my_entries.dart' as my_entries;
 import '../../components/components.dart';
 class AddCarForm extends StatefulWidget {
   final CarEntry car;
-  final Operation operation;
+  final my_entries.Operation operation;
 
   const AddCarForm({super.key, required this.car, required this.operation});
 
@@ -75,7 +75,7 @@ class _AddCarFormState extends State<AddCarForm> {
     initialKmController = TextEditingController();
     tankSizeController = TextEditingController();
 
-    if (widget.operation == Operation.modify) {
+    if (widget.operation == my_entries.Operation.modify) {
       setState(() {
         makeController.text = widget.car.make;
         modelController.text = widget.car.model;
@@ -773,19 +773,19 @@ class _AddCarFormState extends State<AddCarForm> {
                                 widget.car.drivenKm = int.tryParse(kmController.text) ?? 0;
                                 widget.car.initialKm = int.tryParse(initialKmController.text) ?? 0;
                                 widget.car.tankSize = int.tryParse(tankSizeController.text) ?? 0;
-                                if (widget.operation == Operation.add) {
+                                if (widget.operation == my_entries.Operation.add) {
                                   // Assign a unique id for new entries
                                   widget.car.id = DateTime.now().millisecondsSinceEpoch;
                                   widget.car.ownerUsername = auth.currentUser!.email!;
                                   addCarEntryToDb(widget.car);
-                                } else if (widget.operation == Operation.modify) {
+                                } else if (widget.operation == my_entries.Operation.modify) {
                                   modifyCarEntryInDb(widget.car);
                                 }
                                 Navigator.of(context).pop();
                               });
                             },
-                            text: widget.operation == Operation.modify ? 'SAVE CHANGES' : 'ADD',
-                            icon: widget.operation == Operation.modify
+                            text: widget.operation == my_entries.Operation.modify ? 'SAVE CHANGES' : 'ADD',
+                            icon: widget.operation == my_entries.Operation.modify
                                 ? const Icon(
                                     Icons.save,
                                     size: 15,
@@ -800,12 +800,12 @@ class _AddCarFormState extends State<AddCarForm> {
                               height: 48,
                               padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
                               iconPadding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                              color: widget.operation == Operation.modify
+                              color: widget.operation == my_entries.Operation.modify
                                   ? const Color(0xFFEFEFEF)
                                   : FlutterFlowTheme.of(context).primary,
                               textStyle: FlutterFlowTheme.of(context).titleSmall.override(
                                     fontFamily: 'Readex Pro',
-                                    color: widget.operation == Operation.modify
+                                    color: widget.operation == my_entries.Operation.modify
                                         ? const Color(0xFF00C853)
                                         : Colors.white,
                                   ),
@@ -817,7 +817,7 @@ class _AddCarFormState extends State<AddCarForm> {
                               borderRadius: BorderRadius.circular(60),
                             ),
                           ),
-                          if (widget.operation == Operation.modify)
+                          if (widget.operation == my_entries.Operation.modify)
                             Padding(
                               padding: const EdgeInsets.only(top: 12.0),
                               child: FFButtonWidget(
