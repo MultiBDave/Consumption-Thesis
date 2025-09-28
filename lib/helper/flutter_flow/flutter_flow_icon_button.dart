@@ -77,7 +77,7 @@ class _FlutterFlowIconButtonState extends State<FlutterFlowIconButton> {
   @override
   Widget build(BuildContext context) {
     ButtonStyle style = ButtonStyle(
-      shape: WidgetStateProperty.resolveWith<OutlinedBorder>(
+        shape: MaterialStateProperty.resolveWith<OutlinedBorder>(
         (states) {
           return RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(widget.borderRadius ?? 0),
@@ -88,27 +88,27 @@ class _FlutterFlowIconButtonState extends State<FlutterFlowIconButton> {
           );
         },
       ),
-      iconColor: WidgetStateProperty.resolveWith<Color?>(
+        iconColor: MaterialStateProperty.resolveWith<Color?>(
         (states) {
-          if (states.contains(WidgetState.disabled) &&
-              widget.disabledIconColor != null) {
+            if (states.contains(MaterialState.disabled) &&
+                widget.disabledIconColor != null) {
             return widget.disabledIconColor;
           }
-          if (states.contains(WidgetState.hovered) &&
-              widget.hoverIconColor != null) {
+            if (states.contains(MaterialState.hovered) &&
+                widget.hoverIconColor != null) {
             return widget.hoverIconColor;
           }
           return iconColor;
         },
       ),
-      backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
         (states) {
-          if (states.contains(WidgetState.disabled) &&
-              widget.disabledColor != null) {
+            if (states.contains(MaterialState.disabled) &&
+                widget.disabledColor != null) {
             return widget.disabledColor;
           }
-          if (states.contains(WidgetState.hovered) &&
-              widget.hoverColor != null) {
+            if (states.contains(MaterialState.hovered) &&
+                widget.hoverColor != null) {
             return widget.hoverColor;
           }
 
