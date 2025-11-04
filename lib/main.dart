@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
           seedColor: Colors.red.shade400,
           brightness: Brightness.light,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
