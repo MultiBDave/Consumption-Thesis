@@ -31,11 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-# Direct pins to resolve remaining transitive/version conflicts
-  characters: ^1.4.1
-  material_color_utilities: ^0.13.0
-  maybe_just_nothing: ^0.6.0
-
+# (no manual pins here; SDK controls some transitive packages)
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
