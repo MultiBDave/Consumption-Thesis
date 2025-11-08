@@ -31,6 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+# Direct pins to resolve remaining transitive/version conflicts
+  characters: ^1.4.1
+  material_color_utilities: ^0.13.0
+  maybe_just_nothing: ^0.6.0
+  meta: ^1.17.0
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -61,6 +67,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  test_api: ^0.7.7
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
