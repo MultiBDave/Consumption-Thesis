@@ -35,7 +35,6 @@ dependencies:
   characters: ^1.4.1
   material_color_utilities: ^0.13.0
   maybe_just_nothing: ^0.6.0
-  meta: ^1.17.0
 
 
   # The following adds the Cupertino Icons font to your application.
