@@ -22,6 +22,7 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="consumption">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -34,7 +35,9 @@
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
+    // Use the template token so the build system can replace it with the
+    // current service worker version.
+    var serviceWorkerVersion = '{{flutter_service_worker_version}}';
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
@@ -43,6 +46,10 @@
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
+      // Use the legacy loadEntrypoint here — it still initializes the
+      // `_flutter.buildConfig` that newer `load()` expects to already be set.
+      // Calling `loadEntrypoint` avoids the runtime error when running in
+      // local/debug environments.
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
