@@ -38,9 +38,7 @@ class FlutterFlowLineChart extends StatelessWidget {
         LineChartData(
           lineTouchData: LineTouchData(
             handleBuiltInTouches: enableTooltip,
-            touchTooltipData: LineTouchTooltipData(
-              tooltipBgColor: tooltipBackgroundColor!,
-            ),
+            touchTooltipData: LineTouchTooltipData(),
           ),
           gridData: FlGridData(show: showGrid),
           titlesData: FlTitlesData(

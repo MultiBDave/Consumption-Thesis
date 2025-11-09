@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'car_costs_screen.dart';
 import '../helper/firebase.dart';
-import '../helper/flutter_flow/flutter_flow_icon_button.dart';
+// ...existing imports
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
@@ -18,6 +19,10 @@ class CarFuelEntriesScreen extends StatefulWidget {
 class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
   List<FuelEntry> fuelEntries = [];
   bool isLoading = true;
+
+  double get totalFuelCost {
+    return fuelEntries.fold(0.0, (s, e) => s + (e.cost));
+  }
 
   @override
   void initState() {
@@ -124,6 +129,9 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
     final TextEditingController fuelAmountController = TextEditingController(
       text: isEditing ? existingEntry.fuelAmount.toString() : '',
     );
+    final TextEditingController costController = TextEditingController(
+      text: isEditing ? existingEntry.cost.toStringAsFixed(2) : '',
+    );
     final TextEditingController odometerController = TextEditingController(
       text: isEditing
           ? existingEntry.odometer.toString()
@@ -153,6 +161,25 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                       decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           hintText: 'Amount'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text('Cost (${NumberFormat.simpleCurrency().currencySymbol}):'),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      controller: costController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Total cost'),
                     ),
                   ),
                 ],
@@ -196,9 +223,11 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
               try {
                 final fuelAmount = int.parse(fuelAmountController.text);
                 final odometer = int.parse(odometerController.text);
+                final parsedCost = double.tryParse(costController.text) ?? 0.0;
                 if (isEditing) {
                   existingEntry.fuelAmount = fuelAmount;
                   existingEntry.odometer = odometer;
+                  existingEntry.cost = parsedCost;
                   await updateFuelEntry(existingEntry);
                 } else {
                   final newEntry = FuelEntry(
@@ -207,6 +236,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                     fuelAmount: fuelAmount,
                     odometer: odometer,
                     date: DateTime.now(),
+                    cost: parsedCost,
                   );
                   await addFuelEntryToDb(newEntry);
                 }
@@ -235,6 +265,20 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
         title: Text('${widget.car.make} ${widget.car.model} - Fuel Log'),
         backgroundColor: FlutterFlowTheme.of(context).primary,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long),
+            tooltip: 'Costs',
+            onPressed: () async {
+              // Navigate to costs screen
+              await Navigator.of(context).push(MaterialPageRoute(
+                builder: (c) => CarCostsScreen(car: widget.car),
+              ));
+              // Reload entries when returning
+              await _loadFuelEntries();
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -297,6 +341,11 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                           Icons.local_gas_station,
                         ),
                         _buildStatColumn(
+                          'Fuel Cost',
+                          NumberFormat.simpleCurrency().format(totalFuelCost),
+                          Icons.monetization_on,
+                        ),
+                        _buildStatColumn(
                           'Range',
                           widget.car.estimatedRange,
                           Icons.directions,
@@ -350,7 +399,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                               leading: const CircleAvatar(
                                 child: Icon(Icons.local_gas_station),
                               ),
-                              title: Text('${entry.fuelAmount} liters'),
+                              title: Text('${entry.fuelAmount} liters — ${NumberFormat.simpleCurrency().format(entry.cost)}'),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
