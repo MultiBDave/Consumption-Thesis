@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
+import '../models/extra_cost.dart';
 
 Future<void> addDocumentToCollection(
     String collectionName, Map<String, dynamic> data) async {
@@ -153,6 +154,7 @@ Future<FuelEntry?> getFuelEntryFromDb(int id) async {
     fuelAmount: data['fuelAmount'],
     odometer: data['odometer'],
     date: (data['date'] as Timestamp).toDate(),
+    cost: (data['cost'] is num) ? (data['cost'] as num).toDouble() : 0.0,
   );
 }
 
@@ -172,9 +174,52 @@ Future<List<FuelEntry>> loadFuelEntriesForCar(int carId) async {
       fuelAmount: data['fuelAmount'],
       odometer: data['odometer'],
       date: (data['date'] as Timestamp).toDate(),
+      cost: (data['cost'] is num) ? (data['cost'] as num).toDouble() : 0.0,
     ));
   }
   return fuelEntries;
+}
+
+// Extra costs (maintenance, insurance, tolls, etc.)
+Future<void> addExtraCostToDb(ExtraCost cost) async {
+  final data = cost.toMap();
+  await addDocumentToCollection('ExtraCosts', data);
+}
+
+Future<void> removeExtraCostFromDb(int id) async {
+  final docID = await getDocumentID(id, 'ExtraCosts');
+  if (docID.isEmpty) return;
+  await FirebaseFirestore.instance.collection('ExtraCosts').doc(docID).delete();
+}
+
+Future<void> updateExtraCostInDb(ExtraCost cost) async {
+  final docID = await getDocumentID(cost.id, 'ExtraCosts');
+  final data = cost.toMap();
+  if (docID.isEmpty) {
+    // If it doesn't exist yet, add it
+    await addExtraCostToDb(cost);
+  } else {
+    final documentReference = FirebaseFirestore.instance.collection('ExtraCosts').doc(docID);
+    await documentReference.set(data, SetOptions(merge: true));
+  }
+}
+
+Future<List<ExtraCost>> loadExtraCostsForCar(int carId) async {
+  List<ExtraCost> costs = [];
+  // Avoid server-side ordering to prevent requiring a composite index.
+  // We'll fetch by carId and sort locally by date descending.
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection('ExtraCosts')
+      .where('carId', isEqualTo: carId)
+      .get();
+
+  for (var doc in querySnapshot.docs) {
+    final data = doc.data() as Map<String, dynamic>;
+    costs.add(ExtraCost.fromMap(data));
+  }
+
+  costs.sort((a, b) => b.date.compareTo(a.date));
+  return costs;
 }
 
 Future<double> calculateConsumptionFromEntries(int carId, int initialKm) async {

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,7 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   late String _password;
   late String _confirmPass;
   bool _saving = false;
-//final _firestore = FirebaseFirestore.instance;
+// cloud_firestore import removed (we use global `db` from main.dart)
 
   @override
   Widget build(BuildContext context) {

@@ -1,13 +1,6 @@
-import 'package:consumption/auth_screens/login_screen.dart';
-import 'package:consumption/home_page.dart';
-import 'package:consumption/inner_screens/car_fuel_entries_screen.dart';
-import 'package:consumption/inner_screens/forms/add_car_form.dart';
-import 'package:consumption/inner_screens/list_cars.dart';
-import 'package:consumption/main.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:country_picker/country_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../auth_screens/home_screen.dart';
 import '../helper/firebase.dart';
@@ -16,6 +9,9 @@ import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
 import '../../components/components.dart';
+import '../main.dart';
+import 'car_fuel_entries_screen.dart';
+// imports intentionally removed (unused)
 
 enum Operation { modify, add }
 
@@ -652,9 +648,8 @@ class _MyEntriesState extends State<MyEntries> {
             context: context,
             builder: (context) {
               CarEntry newCar = CarEntry.empty();
-              int selectedYear = DateTime.now().year;
-              String? selectedMake;
-              String? selectedModel;
+                          int selectedYear = DateTime.now().year;
+                          String? selectedMake;
               final tankController = TextEditingController();
               return StatefulBuilder(
                 builder: (context, setStateDialog) {
@@ -689,7 +684,6 @@ class _MyEntriesState extends State<MyEntries> {
                               onChanged: (val) => setStateDialog(() {
                                 selectedMake = val;
                                 newCar.make = val!;
-                                selectedModel = null;
                               }),
                             ),
                             const SizedBox(height: 12),
@@ -702,7 +696,6 @@ class _MyEntriesState extends State<MyEntries> {
                                       .toList()
                                   : [],
                               onChanged: (val) => setStateDialog(() {
-                                selectedModel = val;
                                 newCar.model = val!;
                                 final key = '${newCar.make}|${newCar.model}';
                                 final defaultTank = csvTankByMakeModel[key] ?? 0.0;

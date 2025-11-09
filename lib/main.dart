@@ -1,15 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:consumption/auth_screens/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_screens/home_screen.dart';
 import 'auth_screens/login_screen.dart';
 import 'auth_screens/signup_screen.dart';
 import 'firebase_options.dart';
 import 'home_page.dart';
 import 'inner_screens/list_cars.dart';
-import 'models/car_entry.dart';
+// Removed unused imports flagged by analyzer
 
 Future<void> main() async {
   await Firebase.initializeApp(
