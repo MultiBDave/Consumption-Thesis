@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+// chart removed: fl_chart import not needed here
 import 'car_costs_screen.dart';
 import '../helper/firebase.dart';
 // ...existing imports
@@ -138,123 +139,206 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
           : widget.car.drivenKm.toString(),
     );
 
+    DateTime selectedDate = isEditing ? existingEntry.date : DateTime.now();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'Edit Fuel Entry' : 'Add Fuel Entry'),
-        content: SizedBox(
-          height: 180,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    flex: 2,
-                    child: Text('Fuel amount (liters):'),
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isEditing ? 'Edit Fuel Entry' : 'Add Fuel Entry'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.6,
                   ),
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: fuelAmountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Amount'),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            flex: 2,
+                            child: Text('Date:'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TextButton(
+                              onPressed: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                );
+                                if (picked != null) {
+                                  setState(() => selectedDate = picked);
+                                }
+                              },
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(DateFormat('MMM d, yyyy').format(selectedDate)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Expanded(
+                            flex: 2,
+                            child: Text('Fuel amount (liters):'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: fuelAmountController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Amount',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Text('Cost (${NumberFormat.simpleCurrency().currencySymbol}):'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: costController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Total cost',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Expanded(
+                            flex: 2,
+                            child: Text('Current odometer:'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: odometerController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'km',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text('Cost (${NumberFormat.simpleCurrency().currencySymbol}):'),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: costController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Total cost'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Expanded(
-                    flex: 2,
-                    child: Text('Current odometer:'),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: odometerController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Km'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              );
+            },
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (fuelAmountController.text.isEmpty || odometerController.text.isEmpty) {
-                // Use parentContext for active Scaffold
-                ScaffoldMessenger.of(parentContext).showSnackBar(
-                  const SnackBar(content: Text('Please fill in all fields')),
-                );
-                return;
-              }
-              try {
-                final fuelAmount = int.parse(fuelAmountController.text);
-                final odometer = int.parse(odometerController.text);
-                final parsedCost = double.tryParse(costController.text) ?? 0.0;
-                if (isEditing) {
-                  existingEntry.fuelAmount = fuelAmount;
-                  existingEntry.odometer = odometer;
-                  existingEntry.cost = parsedCost;
-                  await updateFuelEntry(existingEntry);
-                } else {
-                  final newEntry = FuelEntry(
-                    id: DateTime.now().millisecondsSinceEpoch,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (fuelAmountController.text.isEmpty || odometerController.text.isEmpty) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
+                try {
+                  final fuelAmount = int.parse(fuelAmountController.text);
+                  final odometer = int.parse(odometerController.text);
+                  final parsedCost = double.tryParse(costController.text) ?? 0.0;
+
+                  // Build a temp entry representing the edited/new entry for validation
+                  final int candidateId = isEditing ? existingEntry.id : DateTime.now().millisecondsSinceEpoch;
+                  final FuelEntry candidateEntry = FuelEntry(
+                    id: candidateId,
                     carId: widget.car.id,
                     fuelAmount: fuelAmount,
                     odometer: odometer,
-                    date: DateTime.now(),
+                    date: selectedDate,
                     cost: parsedCost,
                   );
-                  await addFuelEntryToDb(newEntry);
+
+                  // Load all existing entries and include the candidate, then validate odometer monotonicity by date
+                  List<FuelEntry> allEntries = await loadFuelEntriesForCar(widget.car.id);
+                  if (isEditing) {
+                    allEntries = allEntries.map((e) => e.id == candidateId ? candidateEntry : e).toList();
+                  } else {
+                    allEntries.add(candidateEntry);
+                  }
+                  allEntries.sort((a, b) => a.date.compareTo(b.date)); // oldest -> newest
+
+                  for (var i = 1; i < allEntries.length; i++) {
+                    final prev = allEntries[i - 1];
+                    final next = allEntries[i];
+                    // Allow any ordering for entries on the same day (user may fill twice).
+                    // Only flag a conflict if the later entry has a strictly later date and a lower odometer.
+                    if (next.date.isAfter(prev.date) && next.odometer < prev.odometer) {
+                      await showDialog<void>(
+                        context: parentContext,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Odometer / Date Conflict'),
+                          content: Text(
+                            'Odometer inconsistency:\n'
+                            '${DateFormat('MMM d, yyyy').format(prev.date)} shows ${prev.odometer} km\n'
+                            'but ${DateFormat('MMM d, yyyy').format(next.date)} shows ${next.odometer} km.\n\n'
+                            'Please correct the date or odometer before saving.'
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  if (isEditing) {
+                    existingEntry.fuelAmount = fuelAmount;
+                    existingEntry.odometer = odometer;
+                    existingEntry.cost = parsedCost;
+                    existingEntry.date = selectedDate;
+                    await updateFuelEntry(existingEntry);
+                  } else {
+                    await addFuelEntryToDb(candidateEntry);
+                  }
+                  await _loadFuelEntries();
+                  await updateCarConsumption();
+                  Navigator.of(context).pop();
+                } catch (e) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
                 }
-                // Refresh entries and recalc before closing dialog
-                await _loadFuelEntries();
-                await updateCarConsumption();
-                Navigator.of(context).pop();
-              } catch (e) {
-                // Use parentContext for active Scaffold
-                ScaffoldMessenger.of(parentContext).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
-              }
-            },
-            child: Text(isEditing ? 'Save' : 'Add'),
-          ),
-        ],
-      ),
+              },
+              child: Text(isEditing ? 'Save' : 'Add'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -357,6 +441,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
 
           // Fuel entries list
           Expanded(
@@ -462,4 +547,6 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
       ],
     );
   }
+
+  
 }
