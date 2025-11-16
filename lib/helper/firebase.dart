@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
 import '../models/extra_cost.dart';
+import '../models/reminder.dart';
 
 Future<void> addDocumentToCollection(
     String collectionName, Map<String, dynamic> data) async {
@@ -235,4 +236,57 @@ Future<double> calculateConsumptionFromEntries(int carId, int initialKm) async {
   if (distanceDriven <= 0 || totalFuel <= 0) return 0.0;
   
   return (totalFuel / distanceDriven) * 100;
+}
+
+// Reminders (calendar events tied to a car or user)
+Future<void> addReminderToDb(Reminder reminder) async {
+  final data = reminder.toMap();
+  await addDocumentToCollection('Reminders', data);
+}
+
+Future<void> updateReminderInDb(Reminder reminder) async {
+  final docID = await getDocumentID(reminder.id, 'Reminders');
+  final data = reminder.toMap();
+  if (docID.isEmpty) {
+    await addReminderToDb(reminder);
+  } else {
+    final documentReference = FirebaseFirestore.instance.collection('Reminders').doc(docID);
+    await documentReference.set(data, SetOptions(merge: true));
+  }
+}
+
+Future<void> removeReminderFromDb(int id) async {
+  final docID = await getDocumentID(id, 'Reminders');
+  if (docID.isEmpty) return;
+  await FirebaseFirestore.instance.collection('Reminders').doc(docID).delete();
+}
+
+Future<List<Reminder>> loadRemindersForUser(String ownerUsername) async {
+  List<Reminder> reminders = [];
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('Reminders')
+      .where('ownerUsername', isEqualTo: ownerUsername)
+      .get();
+
+  for (var doc in querySnapshot.docs) {
+    final data = doc.data() as Map<String, dynamic>;
+    reminders.add(Reminder.fromMap(data));
+  }
+  reminders.sort((a, b) => a.date.compareTo(b.date));
+  return reminders;
+}
+
+Future<List<Reminder>> loadRemindersForCar(int carId) async {
+  List<Reminder> reminders = [];
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection('Reminders')
+      .where('carId', isEqualTo: carId)
+      .get();
+
+  for (var doc in querySnapshot.docs) {
+    final data = doc.data() as Map<String, dynamic>;
+    reminders.add(Reminder.fromMap(data));
+  }
+  reminders.sort((a, b) => a.date.compareTo(b.date));
+  return reminders;
 }

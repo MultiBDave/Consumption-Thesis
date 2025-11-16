@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/reminder.dart';
 
 import '../auth_screens/home_screen.dart';
 import '../helper/firebase.dart';
@@ -34,6 +35,7 @@ class CsvRecord {
 class _MyEntriesState extends State<MyEntries> {
   int currentFuelValue = 0;
   int currentDistanceValue = 0;
+  int todaysReminderCount = 0;
   TextEditingController fuelController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
   List<CarEntry> ownCars = [];
@@ -99,6 +101,19 @@ class _MyEntriesState extends State<MyEntries> {
 
     loadCsvAsset();
     _refreshCarList();
+    _loadTodaysReminders();
+  }
+
+  Future<void> _loadTodaysReminders() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => todaysReminderCount = 0);
+      return;
+    }
+    final all = await loadRemindersForUser(user.email!);
+    final now = DateTime.now();
+    final count = all.where((r) => r.date.year == now.year && r.date.month == now.month && r.date.day == now.day).length;
+    setState(() => todaysReminderCount = count);
   }
 
   Future<void> loadCsvAsset() async {
@@ -173,6 +188,299 @@ class _MyEntriesState extends State<MyEntries> {
               ),
         ),
         actions: <Widget>[
+          // Calendar with today's badge
+          Padding(
+            padding: const EdgeInsets.only(right: 4.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.calendar_month),
+                  color: Colors.white,
+                  tooltip: 'Calendar',
+                  onPressed: () async {
+              // Capture parent context so we can navigate after closing the dialog
+              final parentContext = context;
+              // Show calendar dialog (load reminders for current user)
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  DateTime selectedDate = DateTime.now();
+                  List reminders = [];
+                  List<CarEntry> ownCars = [];
+
+                  Future<void> loadData() async {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user != null) {
+                      reminders = await loadRemindersForUser(user.email!);
+                      final cars = await loadCarEntrysFromFirestore();
+                      ownCars = cars.where((c) => c.ownerUsername == user.email).toList();
+                    }
+                  }
+
+                  return FutureBuilder<void>(
+                    future: loadData(),
+                    builder: (context, snapshot) {
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          final dayReminders = reminders.where((r) =>
+                              r.date.year == selectedDate.year &&
+                              r.date.month == selectedDate.month &&
+                              r.date.day == selectedDate.day).toList();
+
+                          return AlertDialog(
+                            contentPadding: const EdgeInsets.all(8),
+                            title: Text('Calendar - ${DateFormat.yMMMM().format(selectedDate)}'),
+                            content: SizedBox(
+                              width: 520,
+                              height: 420,
+                              child: Column(
+                                children: [
+                                  CalendarDatePicker(
+                                    initialDate: selectedDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                    onDateChanged: (d) {
+                                      setState(() {
+                                        selectedDate = d;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: dayReminders.isEmpty
+                                        ? const Center(child: Text('No reminders for this day'))
+                                        : ListView.builder(
+                                            itemCount: dayReminders.length,
+                                            itemBuilder: (c, i) {
+                                              final r = dayReminders[i];
+                                              return ListTile(
+                                                  title: Text(r.title),
+                                                  subtitle: Text(r.description),
+                                                  onTap: () {
+                                                    if (r.carId != null) {
+                                                      final matched = ownCars.where((c) => c.id == r.carId).toList();
+                                                      if (matched.isNotEmpty) {
+                                                        final carToOpen = matched.first;
+                                                        Navigator.of(parentContext).pop();
+                                                        Navigator.push(parentContext, MaterialPageRoute(builder: (ctx) => CarFuelEntriesScreen(car: carToOpen)));
+                                                      }
+                                                    }
+                                                  },
+                                                      trailing: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    if (r.carId != null) Padding(
+                                                      padding: const EdgeInsets.only(right:8.0),
+                                                      child: Builder(
+                                                        builder: (ctx) {
+                                                          final matched = ownCars.where((c) => c.id == r.carId).toList();
+                                                          if (matched.isNotEmpty) {
+                                                            final mc = matched.first;
+                                                            return Text('Car: ${mc.make} ${mc.model} (${mc.year})');
+                                                          }
+                                                          return Text('Car: ${r.carId}');
+                                                        },
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(Icons.edit),
+                                                      onPressed: () async {
+                                                        await showDialog(
+                                                          context: context,
+                                                          builder: (ctx2) {
+                                                            final titleController = TextEditingController(text: r.title);
+                                                            final descController = TextEditingController(text: r.description);
+                                                            int? selectedCar = r.carId;
+                                                            DateTime editDate = r.date;
+                                                            return AlertDialog(
+                                                              title: const Text('Edit reminder'),
+                                                              content: StatefulBuilder(
+                                                                builder: (context, setStateDialog) {
+                                                                  return SizedBox(
+                                                                    width: 420,
+                                                                    child: Column(
+                                                                      mainAxisSize: MainAxisSize.min,
+                                                                      children: [
+                                                                        TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Title')),
+                                                                        const SizedBox(height:8),
+                                                                        TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description')),
+                                                                        const SizedBox(height:8),
+                                                                        DropdownButtonFormField<int?>(
+                                                                          decoration: const InputDecoration(labelText: 'Car (optional)'),
+                                                                          value: selectedCar,
+                                                                          items: [
+                                                                            const DropdownMenuItem<int?>(value: null, child: Text('None')),
+                                                                          ] + ownCars.map((c) => DropdownMenuItem<int?>(value: c.id, child: Text('${c.make} ${c.model}'))).toList(),
+                                                                          onChanged: (v) => setStateDialog(() => selectedCar = v),
+                                                                        ),
+                                                                        const SizedBox(height:8),
+                                                                        TextButton(
+                                                                          onPressed: () async {
+                                                                            final picked = await showDatePicker(context: context, initialDate: editDate, firstDate: DateTime(2000), lastDate: DateTime(2100));
+                                                                            if (picked != null) setStateDialog(() => editDate = picked);
+                                                                          },
+                                                                          child: Text('Date: ${DateFormat.yMMMd().format(editDate)}'),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                              actions: [
+                                                                TextButton(onPressed: () => Navigator.of(ctx2).pop(), child: const Text('Cancel')),
+                                                                TextButton(onPressed: () async {
+                                                                  r.title = titleController.text;
+                                                                  r.description = descController.text;
+                                                                  r.carId = selectedCar;
+                                                                  r.date = editDate;
+                                                                  await updateReminderInDb(r);
+                                                                  Navigator.of(ctx2).pop();
+                                                                  setState(() {});
+                                                                }, child: const Text('Save')),
+                                                              ],
+                                                            );
+                                                          }
+                                                        );
+                                                      },
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                                      onPressed: () async {
+                                                        final ok = await showDialog<bool>(
+                                                          context: context,
+                                                          builder: (c) => AlertDialog(
+                                                            title: const Text('Delete'),
+                                                            content: const Text('Delete this reminder?'),
+                                                            actions: [
+                                                              TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
+                                                              TextButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Delete')),
+                                                            ],
+                                                          ),
+                                                        );
+                                                        if (ok ?? false) {
+                                                          await removeReminderFromDb(r.id);
+                                                          // refresh today's badge
+                                                          await _loadTodaysReminders();
+                                                          reminders.removeAt(i);
+                                                          setState(() {});
+                                                        }
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('Close'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  // Add reminder dialog
+                                  final titleController = TextEditingController();
+                                  final descController = TextEditingController();
+                                  int? selectedCarId;
+                                  DateTime reminderDate = selectedDate;
+                                  await showDialog(
+                                    context: context,
+                                    builder: (ctxAdd) {
+                                      return AlertDialog(
+                                        title: const Text('Add reminder'),
+                                        content: StatefulBuilder(
+                                          builder: (context, setStateDialog) {
+                                            return SizedBox(
+                                              width: 420,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Title')),
+                                                  const SizedBox(height:8),
+                                                  TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description')),
+                                                  const SizedBox(height:8),
+                                                  DropdownButtonFormField<int?>(
+                                                    decoration: const InputDecoration(labelText: 'Car (optional)'),
+                                                    value: selectedCarId,
+                                                    items: [
+                                                      const DropdownMenuItem<int?>(value: null, child: Text('None')),
+                                                    ] + ownCars.map((c) => DropdownMenuItem<int?>(value: c.id, child: Text('${c.make} ${c.model}'))).toList(),
+                                                    onChanged: (v) => setStateDialog(() => selectedCarId = v),
+                                                  ),
+                                                  const SizedBox(height:8),
+                                                  TextButton(onPressed: () async {
+                                                    final picked = await showDatePicker(context: context, initialDate: reminderDate, firstDate: DateTime(2000), lastDate: DateTime(2100));
+                                                    if (picked != null) setStateDialog(() => reminderDate = picked);
+                                                  }, child: Text('Date: ${DateFormat.yMMMd().format(reminderDate)}')),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.of(ctxAdd).pop(), child: const Text('Cancel')),
+                                          TextButton(onPressed: () async {
+                                            final user = FirebaseAuth.instance.currentUser;
+                                            if (user == null) return;
+                                            final newReminder = Reminder(
+                                              id: DateTime.now().millisecondsSinceEpoch,
+                                              carId: selectedCarId,
+                                              title: titleController.text,
+                                              description: descController.text,
+                                              date: reminderDate,
+                                              ownerUsername: user.email ?? '',
+                                            );
+                                            await addReminderToDb(newReminder);
+                                            // refresh parent's badge count
+                                            await _loadTodaysReminders();
+                                            reminders.add(newReminder);
+                                            Navigator.of(ctxAdd).pop();
+                                            setState(() {});
+                                          }, child: const Text('Add')),
+                                        ],
+                                      );
+                                    }
+                                  );
+                                },
+                                child: const Text('Add reminder'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              );
+                  },
+                ),
+                if (todaysReminderCount > 0)
+                  Positioned(
+                    right: 6,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                      child: Center(
+                        child: Text(
+                          todaysReminderCount > 99 ? '99+' : todaysReminderCount.toString(),
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           IconButton(
             icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
             color: isLoggedIn ? Colors.black : Colors.white,
