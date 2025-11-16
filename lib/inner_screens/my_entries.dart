@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../auth_screens/home_screen.dart';
@@ -379,72 +380,123 @@ class _MyEntriesState extends State<MyEntries> {
                                     builder: (BuildContext dialogContext) {
                                       fuelController.clear();
                                       distanceController.text = car.drivenKm.toString();
+                                      final TextEditingController costController = TextEditingController();
+                                      DateTime selectedDate = DateTime.now();
                                       return AlertDialog(
                                         title: const Text('Quick Add Fuel'),
-                                        content: SizedBox(
-                                          height: 180,
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Expanded(
-                                                    flex: 2,
-                                                    child: Text('Fuel amount (liters):'),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: TextField(
-                                                      controller: fuelController,
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      onChanged: (String newValue) {
-                                                        if (newValue.isNotEmpty) {
-                                                          currentFuelValue = int.parse(
-                                                              fuelController.text);
-                                                        }
-                                                      },
-                                                      decoration:
-                                                          const InputDecoration(
-                                                              border:
-                                                                  OutlineInputBorder(),
-                                                              hintText: 'Amount'),
+                                        content: StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return SingleChildScrollView(
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Expanded(
+                                                          flex: 2,
+                                                          child: Text('Date:'),
+                                                        ),
+                                                        Expanded(
+                                                          flex: 3,
+                                                          child: TextButton(
+                                                            onPressed: () async {
+                                                              final picked = await showDatePicker(
+                                                                context: context,
+                                                                initialDate: selectedDate,
+                                                                firstDate: DateTime(2000),
+                                                                lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                                              );
+                                                              if (picked != null) {
+                                                                setState(() => selectedDate = picked);
+                                                              }
+                                                            },
+                                                            child: Align(
+                                                              alignment: Alignment.centerLeft,
+                                                              child: Text(DateFormat('MMM d, yyyy').format(selectedDate)),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Row(
-                                                children: [
-                                                  const Expanded(
-                                                    flex: 2,
-                                                    child: Text('Current odometer:'),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: TextField(
-                                                      controller: distanceController,
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      onChanged: (String newValue) {
-                                                        if (newValue.isNotEmpty) {
-                                                          currentDistanceValue =
-                                                              int.parse(
-                                                                  distanceController
-                                                                      .text);
-                                                        }
-                                                      },
-                                                      decoration:
-                                                          const InputDecoration(
-                                                              border:
-                                                                  OutlineInputBorder(),
-                                                              hintText: 'Km'),
+                                                    const SizedBox(height: 12),
+                                                    Row(
+                                                      children: [
+                                                        const Expanded(
+                                                          flex: 2,
+                                                          child: Text('Fuel amount (liters):'),
+                                                        ),
+                                                        Expanded(
+                                                          flex: 3,
+                                                          child: TextField(
+                                                            controller: fuelController,
+                                                            keyboardType: TextInputType.number,
+                                                            onChanged: (String newValue) {
+                                                              if (newValue.isNotEmpty) {
+                                                                currentFuelValue = int.tryParse(fuelController.text) ?? 0;
+                                                              }
+                                                            },
+                                                            decoration: const InputDecoration(
+                                                              border: OutlineInputBorder(),
+                                                              hintText: 'Amount',
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                ],
+                                                    const SizedBox(height: 16),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          flex: 2,
+                                                          child: Text('Cost (${NumberFormat.simpleCurrency().currencySymbol}):'),
+                                                        ),
+                                                        Expanded(
+                                                          flex: 3,
+                                                          child: TextField(
+                                                            controller: costController,
+                                                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                            decoration: const InputDecoration(
+                                                              border: OutlineInputBorder(),
+                                                              hintText: 'Total cost',
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                    Row(
+                                                      children: [
+                                                        const Expanded(
+                                                          flex: 2,
+                                                          child: Text('Current odometer:'),
+                                                        ),
+                                                        Expanded(
+                                                          flex: 3,
+                                                          child: TextField(
+                                                            controller: distanceController,
+                                                            keyboardType: TextInputType.number,
+                                                            onChanged: (String newValue) {
+                                                              if (newValue.isNotEmpty) {
+                                                                currentDistanceValue = int.tryParse(distanceController.text) ?? 0;
+                                                              }
+                                                            },
+                                                            decoration: const InputDecoration(
+                                                              border: OutlineInputBorder(),
+                                                              hintText: 'Km',
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ],
-                                          ),
+                                            );
+                                          },
                                         ),
                                         actions: [
                                           TextButton(
@@ -463,29 +515,32 @@ class _MyEntriesState extends State<MyEntries> {
                                                 }
 
                                                 try {
+                                                  final parsedCost = double.tryParse(costController.text) ?? 0.0;
+
                                                   // Create a new fuel entry
                                                   final newFuelEntry = FuelEntry(
                                                     id: DateTime.now().millisecondsSinceEpoch,
                                                     carId: car.id,
                                                     fuelAmount: currentFuelValue,
                                                     odometer: currentDistanceValue,
-                                                    date: DateTime.now(),
+                                                    date: selectedDate,
+                                                    cost: parsedCost,
                                                   );
-                                                  
+
                                                   await addFuelEntryToDb(newFuelEntry);
-                                                  
+
                                                   // Update the car's total fuel and odometer
                                                   setState(() {
                                                     car.fuelSum += currentFuelValue;
                                                     car.drivenKm = currentDistanceValue;
                                                     car.refreshConsumption();
                                                   });
-                                                  
+
                                                   // Update the car in the database
                                                   await modifyCarEntryInDb(car);
 
                                                   Navigator.of(dialogContext).pop();
-                                                  
+
                                                   // Show success message using captured scaffold messenger
                                                   scaffoldMessenger.showSnackBar(
                                                     const SnackBar(content: Text('Fuel entry added successfully!'))
