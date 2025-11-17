@@ -6,9 +6,8 @@ class PersistentBottomBarScaffold extends StatefulWidget {
   final List<PersistentTabItem> items;
 
   const PersistentBottomBarScaffold({super.key, required this.items});
-
-  @override
-  _PersistentBottomBarScaffoldState createState() =>
+    @override
+    State<PersistentBottomBarScaffold> createState() =>
       _PersistentBottomBarScaffoldState();
 }
 
@@ -53,6 +52,8 @@ class _PersistentBottomBarScaffoldState
 
   @override
   Widget build(BuildContext context) {
+    // WillPopScope is deprecated; keep behavior and plan migration to PopScope later.
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         if (widget.items[_selectedTab].navigatorkey?.currentState?.canPop() ??

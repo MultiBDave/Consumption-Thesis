@@ -6,7 +6,7 @@ import 'inner_screens/list_cars.dart';
 class HomePage extends StatefulWidget {
   static String id = 'home_page';
 
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();

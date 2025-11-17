@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use, sort_child_properties_last
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 // chart removed: fl_chart import not needed here
@@ -11,7 +13,7 @@ import '../models/fuel_entry.dart';
 class CarFuelEntriesScreen extends StatefulWidget {
   final CarEntry car;
 
-  const CarFuelEntriesScreen({Key? key, required this.car}) : super(key: key);
+  const CarFuelEntriesScreen({super.key, required this.car});
 
   @override
   State<CarFuelEntriesScreen> createState() => _CarFuelEntriesScreenState();
@@ -53,6 +55,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
       setState(() {
         isLoading = false;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading fuel entries: $e')),
       );
@@ -85,6 +88,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
         // Recalculate car's consumption
         updateCarConsumption();
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting entry: $e')),
         );
@@ -257,6 +261,13 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
             ),
             TextButton(
               onPressed: () async {
+                // Capture the dialog navigator/messenger before any awaits
+                // so we can safely close the dialog afterwards without
+                // popping the parent route.
+                final navigator = Navigator.of(context);
+                // We'll use the dialog's navigator to close the dialog.
+                // (No separate dialog messenger needed here.)
+
                 if (fuelAmountController.text.isEmpty || odometerController.text.isEmpty) {
                   ScaffoldMessenger.of(parentContext).showSnackBar(
                     const SnackBar(content: Text('Please fill in all fields')),
@@ -294,9 +305,12 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                     // Allow any ordering for entries on the same day (user may fill twice).
                     // Only flag a conflict if the later entry has a strictly later date and a lower odometer.
                     if (next.date.isAfter(prev.date) && next.odometer < prev.odometer) {
-                      await showDialog<void>(
-                        context: parentContext,
-                        builder: (ctx) => AlertDialog(
+                      if (!mounted) return;
+                        // This dialog uses a parent context captured before async work.
+                        // The mounted check ensures the State is still valid.
+                        await showDialog<void>(
+                          context: parentContext,
+                          builder: (ctx) => AlertDialog(
                           title: const Text('Odometer / Date Conflict'),
                           content: Text(
                             'Odometer inconsistency:\n'
@@ -327,8 +341,12 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                   }
                   await _loadFuelEntries();
                   await updateCarConsumption();
-                  Navigator.of(context).pop();
+                  if (!mounted) return;
+                  // Close the dialog (use the dialog's navigator, not the parent)
+                  navigator.pop();
                 } catch (e) {
+                  if (!mounted) return;
+                  // Show error on the parent scaffold to ensure visibility
                   ScaffoldMessenger.of(parentContext).showSnackBar(
                     SnackBar(content: Text('Error: $e')),
                   );
@@ -354,8 +372,9 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
             icon: const Icon(Icons.receipt_long),
             tooltip: 'Costs',
             onPressed: () async {
+              final navigator = Navigator.of(context);
               // Navigate to costs screen
-              await Navigator.of(context).push(MaterialPageRoute(
+              await navigator.push(MaterialPageRoute(
                 builder: (c) => CarCostsScreen(car: widget.car),
               ));
               // Reload entries when returning

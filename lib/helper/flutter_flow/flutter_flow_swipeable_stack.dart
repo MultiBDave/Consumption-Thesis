@@ -42,7 +42,7 @@ class FlutterFlowSwipeableStack extends StatefulWidget {
   final Function(int) onDownSwipe;
 
   @override
-  _FFSwipeableStackState createState() => _FFSwipeableStackState();
+  State<FlutterFlowSwipeableStack> createState() => _FFSwipeableStackState();
 }
 
 List<Widget> getItems(int itemCount, BuildContext context,

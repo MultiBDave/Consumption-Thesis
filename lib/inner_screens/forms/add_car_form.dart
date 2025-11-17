@@ -421,12 +421,12 @@ class _AddCarFormState extends State<AddCarForm> {
                               child: Text(value),
                             );
                           }).toList(),
-                          value: widget.car.color == ''
+                            initialValue: widget.car.color == ''
                               ? colorList.first
                               : colorList
-                                  .where(
-                                      (element) => element == widget.car.color)
-                                  .first,
+                                .where(
+                                  (element) => element == widget.car.color)
+                                .first,
                           decoration: InputDecoration(
                             labelText: 'Color',
                             labelStyle:
@@ -479,12 +479,12 @@ class _AddCarFormState extends State<AddCarForm> {
                               child: Text(value),
                             );
                           }).toList(),
-                          value: widget.car.type == ''
+                            initialValue: widget.car.type == ''
                               ? carList.first
                               : carList
-                                  .where(
-                                      (element) => element == widget.car.type)
-                                  .first,
+                                .where(
+                                  (element) => element == widget.car.type)
+                                .first,
                           decoration: InputDecoration(
                             labelText: 'Type',
                             labelStyle:
@@ -740,7 +740,7 @@ class _AddCarFormState extends State<AddCarForm> {
                           child: Text(
                             'Current fuel summary: ${widget.car.fuelSum} liters, consumption: ${widget.car.getConsumption()} liters/100km\nEstimated range with full tank: ${widget.car.estimatedRange}',
                             style: FlutterFlowTheme.of(context)
-                                .bodyText1
+                              .bodyMedium
                                 .override(
                                   fontFamily: 'Readex Pro',
                                   color:

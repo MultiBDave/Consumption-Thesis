@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -114,6 +116,7 @@ class _MyEntriesState extends State<MyEntries> {
     final now = DateTime.now();
     final count = all.where((r) => r.date.year == now.year && r.date.month == now.month && r.date.day == now.day).length;
     setState(() => todaysReminderCount = count);
+    return;
   }
 
   Future<void> loadCsvAsset() async {
@@ -138,10 +141,11 @@ class _MyEntriesState extends State<MyEntries> {
     }
     csvModelsByMake.updateAll((k, v) => v.toSet().toList()..sort());
     setState(() {});
+    return;
   }
 
-  void _deleteVehicle(CarEntry car) {
-    showDialog(
+  Future<void> _deleteVehicle(CarEntry car) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -149,19 +153,11 @@ class _MyEntriesState extends State<MyEntries> {
           content: const Text('Are you sure you want to delete this vehicle?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                setState(() {
-                  removeCarEntryFromDb(car.id);
-                  removeEntry(car.id);
-                });
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text(
                 'Delete',
                 style: TextStyle(color: Colors.red),
@@ -171,6 +167,14 @@ class _MyEntriesState extends State<MyEntries> {
         );
       },
     );
+
+    if (confirmed ?? false) {
+      await removeCarEntryFromDb(car.id);
+      setState(() {
+        removeEntry(car.id);
+      });
+    }
+    return;
   }
 
   @override
@@ -308,7 +312,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                                         const SizedBox(height:8),
                                                                         DropdownButtonFormField<int?>(
                                                                           decoration: const InputDecoration(labelText: 'Car (optional)'),
-                                                                          value: selectedCar,
+                                                                          initialValue: selectedCar,
                                                                           items: [
                                                                             const DropdownMenuItem<int?>(value: null, child: Text('None')),
                                                                           ] + ownCars.map((c) => DropdownMenuItem<int?>(value: c.id, child: Text('${c.make} ${c.model}'))).toList(),
@@ -330,14 +334,16 @@ class _MyEntriesState extends State<MyEntries> {
                                                               actions: [
                                                                 TextButton(onPressed: () => Navigator.of(ctx2).pop(), child: const Text('Cancel')),
                                                                 TextButton(onPressed: () async {
-                                                                  r.title = titleController.text;
-                                                                  r.description = descController.text;
-                                                                  r.carId = selectedCar;
-                                                                  r.date = editDate;
-                                                                  await updateReminderInDb(r);
-                                                                  Navigator.of(ctx2).pop();
-                                                                  setState(() {});
-                                                                }, child: const Text('Save')),
+                                                                      r.title = titleController.text;
+                                                                      r.description = descController.text;
+                                                                      r.carId = selectedCar;
+                                                                      r.date = editDate;
+                                                                      await updateReminderInDb(r);
+                                                                      // Refresh parent's today's badge count so the icon updates
+                                                                      await _loadTodaysReminders();
+                                                                      Navigator.of(ctx2).pop();
+                                                                      setState(() {});
+                                                                    }, child: const Text('Save')),
                                                               ],
                                                             );
                                                           }
@@ -406,7 +412,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                   const SizedBox(height:8),
                                                   DropdownButtonFormField<int?>(
                                                     decoration: const InputDecoration(labelText: 'Car (optional)'),
-                                                    value: selectedCarId,
+                                                    initialValue: selectedCarId,
                                                     items: [
                                                       const DropdownMenuItem<int?>(value: null, child: Text('None')),
                                                     ] + ownCars.map((c) => DropdownMenuItem<int?>(value: c.id, child: Text('${c.make} ${c.model}'))).toList(),
@@ -660,13 +666,11 @@ class _MyEntriesState extends State<MyEntries> {
                                 color: FlutterFlowTheme.of(context).primaryBackground,
                                 size: 20,
                               ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CarFuelEntriesScreen(car: car),
-                                  ),
-                                );
+                              onPressed: () async {
+                                final navigator = Navigator.of(context);
+                                await navigator.push(MaterialPageRoute(
+                                  builder: (c) => CarFuelEntriesScreen(car: car),
+                                ));
                               },
                             ),
                             const SizedBox(width: 8),
@@ -680,10 +684,10 @@ class _MyEntriesState extends State<MyEntries> {
                                 color: FlutterFlowTheme.of(context).primaryBackground,
                                 size: 20,
                               ),
-                              onPressed: () {
+                              onPressed: () async {
                                 // Capture the scaffold messenger before showing the dialog to avoid context issues
                                 final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                showDialog(
+                                await showDialog(
                                     context: context,
                                     builder: (BuildContext dialogContext) {
                                       fuelController.clear();
@@ -854,7 +858,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                     const SnackBar(content: Text('Fuel entry added successfully!'))
                                                   );
                                                 } catch (e) {
-                                                  print("Error adding fuel entry: $e");
+                                                  debugPrint('Error adding fuel entry: $e');
                                                   scaffoldMessenger.showSnackBar(
                                                     SnackBar(content: Text('Error: ${e.toString()}')),
                                                   );
@@ -993,8 +997,8 @@ class _MyEntriesState extends State<MyEntries> {
                                 color: Colors.white,
                                 size: 20,
                               ),
-                              onPressed: () {
-                                _deleteVehicle(car);
+                              onPressed: () async {
+                                await _deleteVehicle(car);
                               },
                             ),
                           ],
@@ -1032,7 +1036,7 @@ class _MyEntriesState extends State<MyEntries> {
                             // Year dropdown
                             DropdownButtonFormField<int>(
                               decoration: const InputDecoration(labelText: 'Year', border: OutlineInputBorder()),
-                              value: selectedYear,
+                              initialValue: selectedYear,
                               items: yearRange.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
                               onChanged: (val) => setStateDialog(() {
                                 selectedYear = val!;
@@ -1043,6 +1047,7 @@ class _MyEntriesState extends State<MyEntries> {
                             // Make dropdown
                             DropdownButtonFormField<String>(
                               decoration: const InputDecoration(labelText: 'Make', border: OutlineInputBorder()),
+                              initialValue: selectedMake,
                               items: csvMakes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                               onChanged: (val) => setStateDialog(() {
                                 selectedMake = val;
@@ -1053,6 +1058,7 @@ class _MyEntriesState extends State<MyEntries> {
                             // Model dropdown
                             DropdownButtonFormField<String>(
                               decoration: const InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
+                              initialValue: null,
                               items: selectedMake != null
                                   ? csvModelsByMake[selectedMake!]!
                                       .map((mo) => DropdownMenuItem(value: mo, child: Text(mo)))
@@ -1076,6 +1082,7 @@ class _MyEntriesState extends State<MyEntries> {
                             // Type dropdown
                             DropdownButtonFormField<String>(
                               decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                              initialValue: null,
                               items: carTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                               onChanged: (val) => newCar.type = val!,
                             ),

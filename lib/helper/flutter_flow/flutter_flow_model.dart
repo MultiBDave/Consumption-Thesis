@@ -123,7 +123,11 @@ class FlutterFlowDynamicModels<T extends FlutterFlowModel> {
     return model != null ? getValue(model) : null;
   }
 
-  void dispose() => _childrenModels.values.forEach((model) => model.dispose());
+  void dispose() {
+    for (final model in _childrenModels.values) {
+      model.dispose();
+    }
+  }
 
   void _updateActiveKeys(String uniqueKey) {
     final shouldResetActiveKeys = _activeKeys == null;
@@ -149,18 +153,11 @@ class FlutterFlowDynamicModels<T extends FlutterFlowModel> {
 }
 
 T? _getDefaultValue<T>() {
-  switch (T) {
-    case int:
-      return 0 as T;
-    case double:
-      return 0.0 as T;
-    case String:
-      return '' as T;
-    case bool:
-      return false as T;
-    default:
-      return null as T;
-  }
+  if (T == int) return 0 as T;
+  if (T == double) return 0.0 as T;
+  if (T == String) return '' as T;
+  if (T == bool) return false as T;
+  return null as T;
 }
 
 extension TextValidationExtensions on String? Function(BuildContext, String?)? {
