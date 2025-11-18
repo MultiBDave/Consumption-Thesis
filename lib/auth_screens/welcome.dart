@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../main.dart';
 
-bool back_office = false;
+// Use lowerCamelCase for variable names
+bool backOffice = false;
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -22,13 +23,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(back_office ? appName : 'Under construction'),
+        title: Text(backOffice ? appName : 'Under construction'),
         backgroundColor: appBackgroundColor,
         foregroundColor: appForegroundColor,
       ),
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.only(left: 30.0, right: 30, top: 10),
+        // WillPopScope is deprecated; ignore the deprecation until migrated to PopScope
+        // ignore: deprecated_member_use
         child: WillPopScope(
           onWillPop: () async {
             SystemNavigator.pop();

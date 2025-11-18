@@ -5,9 +5,10 @@ import 'flutter_flow/flutter_flow_theme.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final Function onBackPressed;
+  final VoidCallback onBackPressed;
 
   const CustomAppBar({
+    super.key,
     required this.title,
     required this.onBackPressed,
   });

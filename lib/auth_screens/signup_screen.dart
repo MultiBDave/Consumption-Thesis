@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,6 +28,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // WillPopScope is deprecated; keep current behavior and ignore the deprecation
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         Navigator.popAndPushNamed(context, HomeScreen.id);
@@ -100,6 +104,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             question: 'Have an account?',
                             buttonPressed: () async {
                               FocusManager.instance.primaryFocus?.unfocus();
+                              // Capture navigator to use for navigation after async work
+                              final navigator = Navigator.of(context);
+
                               setState(() {
                                 _saving = true;
                               });
@@ -118,32 +125,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     'role': 'undefined',
                                     'approved': false,
                                   });
-                                                                  if (context.mounted) {
-                                    signUpAlert(
-                                      context: context,
-                                      title: 'GOOD JOB',
-                                      desc: 'Go login now',
-                                      btnText: 'Login Now',
-                                      onPressed: () {
-                                        setState(() {
-                                          _saving = false;
-                                          Navigator.popAndPushNamed(
-                                              context, SignUpScreen.id);
-                                        });
-                                        Navigator.pushNamed(
-                                            context, LoginScreen.id);
-                                      },
-                                    ).show();
-                                  }
+                                                                  if (!mounted) return;
+                                                                  // stop loading then show dialog and navigate
+                                                                  setState(() {
+                                                                    _saving = false;
+                                                                  });
+                                                                  // Use current context right after mounted check
+                                                                  signUpAlert(
+                                                                    context: context,
+                                                                    title: 'GOOD JOB',
+                                                                    desc: 'Go login now',
+                                                                    btnText: 'Login Now',
+                                                                    onPressed: () {
+                                                                      navigator.popAndPushNamed(SignUpScreen.id);
+                                                                      navigator.pushNamed(LoginScreen.id);
+                                                                    },
+                                                                  ).show();
                                 } catch (e) {
-                                  signUpAlert(
+                                    if (!mounted) return;
+                                      signUpAlert(
                                       context: context,
                                       onPressed: () {
                                         SystemNavigator.pop();
                                       },
                                       title: 'SOMETHING WRONG',
                                       desc: 'Close the app and try again',
-                                      btnText: 'Close Now');
+                                      btnText: 'Close Now').show();
                                 }
                               } else {
                                 showAlert(

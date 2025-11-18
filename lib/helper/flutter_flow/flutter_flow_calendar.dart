@@ -89,8 +89,11 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
 
   Color get color => widget.color;
 
+  // TODO: migrate to `withValues()` once Flutter SDK and design tokens are aligned
+  // ignore: deprecated_member_use
   Color get lightColor => widget.color.withOpacity(0.85);
 
+  // ignore: deprecated_member_use
   Color get lighterColor => widget.color.withOpacity(0.60);
 
   void setSelectedDay(

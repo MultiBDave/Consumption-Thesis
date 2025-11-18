@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:consumption/auth_screens/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -511,7 +513,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                            borderRadius: BorderRadius.circular(8),
                          ),
                        ),
-                       value: currentMakeTextFormFieldValue.isEmpty ? null : currentMakeTextFormFieldValue,
+                       initialValue: currentMakeTextFormFieldValue.isEmpty ? null : currentMakeTextFormFieldValue,
                        items: [
                          const DropdownMenuItem(value: '', child: Text('All makes')),
                          ...makes.map((make) => DropdownMenuItem(value: make, child: Text(make))),
@@ -534,7 +536,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                            borderRadius: BorderRadius.circular(8),
                          ),
                        ),
-                       value: currentModelTextFormFieldValue.isEmpty ? null : currentModelTextFormFieldValue,
+                       initialValue: currentModelTextFormFieldValue.isEmpty ? null : currentModelTextFormFieldValue,
                        items: [
                          const DropdownMenuItem(value: '', child: Text('All models')),
                          ...models.map((model) => DropdownMenuItem(value: model, child: Text(model))),
@@ -557,7 +559,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        value: currentColorTextFormFieldValue.isEmpty ? null : currentColorTextFormFieldValue,
+                        initialValue: currentColorTextFormFieldValue.isEmpty ? null : currentColorTextFormFieldValue,
                         items: [
                           const DropdownMenuItem(
                             value: '',
@@ -586,7 +588,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        value: typeController.text.isEmpty ? null : typeController.text,
+                        initialValue: typeController.text.isEmpty ? null : typeController.text,
                         items: [
                           const DropdownMenuItem(
                             value: '',

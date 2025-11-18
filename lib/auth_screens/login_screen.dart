@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // WillPopScope is deprecated; keep current behavior and ignore the deprecation
+    // until a full migration to `PopScope` is done.
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         Navigator.popAndPushNamed(context, HomeScreen.id);
@@ -80,30 +85,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           question: 'Forgot password?',
                           buttonPressed: () async {
                             FocusManager.instance.primaryFocus?.unfocus();
+                            // Capture navigator/context before awaiting to avoid
+                            // using BuildContext after async gaps.
+                            final navigator = Navigator.of(context);
+
                             setState(() {
                               _saving = true;
                             });
                             try {
                               await auth.signInWithEmailAndPassword(
                                   email: _email, password: _password);
-
-                              if (context.mounted) {
-                                setState(() {
-                                  _saving = false;
-                                  Navigator.popAndPushNamed(
-                                      context, LoginScreen.id);
-                                });
-                                Navigator.pushNamed(context, HomePage.id);
-                              }
+                              if (!mounted) return;
+                              // stop loading first, then navigate
+                              setState(() {
+                                _saving = false;
+                              });
+                              navigator.popAndPushNamed(LoginScreen.id);
+                              navigator.pushNamed(HomePage.id);
                             } catch (e) {
+                              if (!mounted) return;
+                              // Use current context immediately after mounted check
                               signUpAlert(
                                 context: context,
                                 onPressed: () {
+                                  if (!mounted) return;
                                   setState(() {
                                     _saving = false;
                                   });
-                                  Navigator.popAndPushNamed(
-                                      context, LoginScreen.id);
+                                  navigator.popAndPushNamed(LoginScreen.id);
                                 },
                                 title: 'WRONG PASSWORD OR EMAIL',
                                 desc:

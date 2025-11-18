@@ -24,6 +24,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+// Temporary: ignore deprecated Radio group APIs until FlutterFlow helpers are migrated.
+// ignore_for_file: deprecated_member_use
 
 import 'form_field_controller.dart';
 import 'package:flutter/material.dart';

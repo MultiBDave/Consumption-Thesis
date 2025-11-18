@@ -6,11 +6,12 @@ import '../models/extra_cost.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
+// ignore_for_file: sort_child_properties_last
 // dart:math no longer required here
 
 class CarCostsScreen extends StatefulWidget {
   final CarEntry car;
-  const CarCostsScreen({Key? key, required this.car}) : super(key: key);
+  const CarCostsScreen({super.key, required this.car});
 
   @override
   State<CarCostsScreen> createState() => _CarCostsScreenState();
@@ -125,6 +126,11 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
             TextButton(onPressed: () async {
+              // Capture navigators/messengers before async gaps to avoid using
+              // the BuildContext across awaits (use_build_context_synchronously).
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
               final amount = double.tryParse(amountCtrl.text) ?? 0.0;
               final category = categoryCtrl.text.trim();
               final desc = descCtrl.text.trim();
@@ -151,9 +157,11 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
                   await addExtraCostToDb(cost);
                 }
                 await _loadAll();
-                Navigator.of(context).pop();
+                if (!mounted) return;
+                navigator.pop();
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                if (!mounted) return;
+                messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
               }
             }, child: Text(isEditing ? 'Save' : 'Add')),
           ],
@@ -343,7 +351,7 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Total fuel cost'),
-                          Text('${NumberFormat.simpleCurrency().format(totalFuelCost)}'),
+                          Text(NumberFormat.simpleCurrency().format(totalFuelCost)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -351,7 +359,7 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Total extra cost'),
-                          Text('${NumberFormat.simpleCurrency().format(totalExtraCost)}'),
+                          Text(NumberFormat.simpleCurrency().format(totalExtraCost)),
                         ],
                       ),
                       const Divider(),
@@ -359,7 +367,7 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Grand total', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text('${NumberFormat.simpleCurrency().format(totalFuelCost + totalExtraCost)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(NumberFormat.simpleCurrency().format(totalFuelCost + totalExtraCost), style: const TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ],

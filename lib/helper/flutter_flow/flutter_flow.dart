@@ -1,5 +1,3 @@
-library flutterflow_ui;
-
 export 'flutter_flow_animations.dart';
 export 'flutter_flow_button_tabbar.dart';
 export 'flutter_flow_calendar.dart';

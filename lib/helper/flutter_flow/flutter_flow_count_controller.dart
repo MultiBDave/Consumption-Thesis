@@ -18,14 +18,15 @@ class FlutterFlowCountController extends StatefulWidget {
   final Widget Function(bool enabled) incrementIconBuilder;
   final Widget Function(int count) countBuilder;
   final int count;
-  final Function(int) updateCount;
+  final ValueChanged<int> updateCount;
   final int stepSize;
   final int? minimum;
   final int? maximum;
   final EdgeInsetsGeometry contentPadding;
 
   @override
-  _FlutterFlowCountControllerState createState() =>
+    @override
+    State<FlutterFlowCountController> createState() =>
       _FlutterFlowCountControllerState();
 }
 

@@ -23,12 +23,14 @@
  * THE SOFTWARE.
  */
 
+// ignore_for_file: unused_element_parameter
+
 import 'package:emoji_flag_converter/emoji_flag_converter.dart';
 import 'package:flutter/material.dart';
 
 class FlutterFlowLanguageSelector extends StatelessWidget {
   const FlutterFlowLanguageSelector({
-    Key? key,
+    super.key,
     required this.currentLanguage,
     required this.languages,
     required this.onChanged,
@@ -44,7 +46,7 @@ class FlutterFlowLanguageSelector extends StatelessWidget {
     this.dropdownColor,
     this.dropdownIconColor = const Color(0xFF14181B),
     this.dropdownIcon,
-  }) : super(key: key);
+  });
 
   final double? width;
   final double? height;
@@ -90,14 +92,14 @@ class FlutterFlowLanguageSelector extends StatelessWidget {
 
 class _LanguagePickerItem extends StatelessWidget {
   const _LanguagePickerItem({
-    Key? key,
+    super.key,
     required this.language,
     required this.languages,
     this.textStyle,
     this.hideFlags = false,
     this.flagSize = 24.0,
     this.flagTextGap = 8.0,
-  }) : super(key: key);
+  });
 
   final String language;
   final List<String> languages;
@@ -157,7 +159,7 @@ class _LanguagePickerItem extends StatelessWidget {
 /// Provides a customizable [DropdownButton] for all languages
 class _LanguagePickerDropdown extends StatelessWidget {
   const _LanguagePickerDropdown({
-    Key? key,
+    super.key,
     required this.itemBuilder,
     required this.currentLanguage,
     required this.onChanged,
@@ -168,7 +170,7 @@ class _LanguagePickerDropdown extends StatelessWidget {
     this.dropdownColor,
     this.dropdownIconColor = const Color(0xFF14181B),
     this.dropdownIcon,
-  }) : super(key: key);
+  });
 
   /// This function will be called to build the child of DropdownMenuItem.
   final Widget Function(Language) itemBuilder;

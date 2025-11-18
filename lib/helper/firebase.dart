@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
 import '../models/extra_cost.dart';
+import '../models/reminder.dart';
 
 Future<void> addDocumentToCollection(
     String collectionName, Map<String, dynamic> data) async {
@@ -31,7 +32,7 @@ Future<void> updateCarEntry(CarEntry carEntry, String documentID) async {
 
 Future<CarEntry> getCarEntryFromDb(int id) async {
   String docID = await getDocumentID(id, 'CarEntrys');
-  var snapshot = await FirebaseFirestore.instance.collection('CarEntrys').doc(docID).get();
+  DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance.collection('CarEntrys').doc(docID).get();
   final data = snapshot.data()!;
 
   CarEntry carEntry = CarEntry.fuel(
@@ -86,7 +87,7 @@ Future<void> removeCarEntryFromDb(int id) async {
 }
 
 Future<String> getDocumentID(int id, String collection) async {
-  var snapshot =
+    QuerySnapshot<Map<String, dynamic>> snapshot =
       await FirebaseFirestore.instance.collection(collection).where('id', isEqualTo: id).get();
 
   if (snapshot.docs.isEmpty) {
@@ -97,11 +98,11 @@ Future<String> getDocumentID(int id, String collection) async {
 }
 
 Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
-  List<CarEntry> CarEntrys = [];
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('CarEntrys').get();
+  List<CarEntry> carEntrys = [];
+  QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance.collection('CarEntrys').get();
   for (var doc in querySnapshot.docs) {
-    final data = doc.data() as Map<String, dynamic>;
-    CarEntrys.add(CarEntry.fuel(
+    final data = doc.data();
+    carEntrys.add(CarEntry.fuel(
         id: data['id'],
         model: data['model'],
         make: data['make'],
@@ -115,7 +116,14 @@ Future<List<CarEntry>> loadCarEntrysFromFirestore() async {
         initialKm: data['initialKm'] ?? 0,
         tankSize: data['tankSize'] ?? 0));
   }
-  return CarEntrys;
+  return carEntrys;
+}
+
+double _toDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? 0.0;
+  return 0.0;
 }
 
 Future<void> addFuelEntryToDb(FuelEntry fuelEntry) async {
@@ -144,7 +152,7 @@ Future<FuelEntry?> getFuelEntryFromDb(int id) async {
   String docID = await getDocumentID(id, 'FuelEntries');
   if (docID.isEmpty) return null;
   
-  var snapshot = await FirebaseFirestore.instance.collection('FuelEntries').doc(docID).get();
+  DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance.collection('FuelEntries').doc(docID).get();
   if (!snapshot.exists) return null;
   
   final data = snapshot.data()!;
@@ -154,27 +162,27 @@ Future<FuelEntry?> getFuelEntryFromDb(int id) async {
     fuelAmount: data['fuelAmount'],
     odometer: data['odometer'],
     date: (data['date'] as Timestamp).toDate(),
-    cost: (data['cost'] is num) ? (data['cost'] as num).toDouble() : 0.0,
+    cost: _toDouble(data['cost']),
   );
 }
 
 Future<List<FuelEntry>> loadFuelEntriesForCar(int carId) async {
   List<FuelEntry> fuelEntries = [];
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
       .collection('FuelEntries')
       .where('carId', isEqualTo: carId)
       .orderBy('date', descending: true)
       .get();
       
   for (var doc in querySnapshot.docs) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data();
     fuelEntries.add(FuelEntry(
       id: data['id'],
       carId: data['carId'],
       fuelAmount: data['fuelAmount'],
       odometer: data['odometer'],
       date: (data['date'] as Timestamp).toDate(),
-      cost: (data['cost'] is num) ? (data['cost'] as num).toDouble() : 0.0,
+      cost: _toDouble(data['cost']),
     ));
   }
   return fuelEntries;
@@ -208,13 +216,13 @@ Future<List<ExtraCost>> loadExtraCostsForCar(int carId) async {
   List<ExtraCost> costs = [];
   // Avoid server-side ordering to prevent requiring a composite index.
   // We'll fetch by carId and sort locally by date descending.
-  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
       .collection('ExtraCosts')
       .where('carId', isEqualTo: carId)
       .get();
 
   for (var doc in querySnapshot.docs) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data();
     costs.add(ExtraCost.fromMap(data));
   }
 
@@ -228,11 +236,64 @@ Future<double> calculateConsumptionFromEntries(int carId, int initialKm) async {
   
   entries.sort((a, b) => a.odometer.compareTo(b.odometer));
   
-  int totalFuel = entries.fold(0, (sum, entry) => sum + entry.fuelAmount);
+  int totalFuel = entries.fold(0, (acc, entry) => acc + entry.fuelAmount);
   int maxOdometer = entries.isEmpty ? initialKm : entries.map((e) => e.odometer).reduce((a, b) => a > b ? a : b);
   int distanceDriven = maxOdometer - initialKm;
   
   if (distanceDriven <= 0 || totalFuel <= 0) return 0.0;
   
   return (totalFuel / distanceDriven) * 100;
+}
+
+// Reminders (calendar events tied to a car or user)
+Future<void> addReminderToDb(Reminder reminder) async {
+  final data = reminder.toMap();
+  await addDocumentToCollection('Reminders', data);
+}
+
+Future<void> updateReminderInDb(Reminder reminder) async {
+  final docID = await getDocumentID(reminder.id, 'Reminders');
+  final data = reminder.toMap();
+  if (docID.isEmpty) {
+    await addReminderToDb(reminder);
+  } else {
+    final documentReference = FirebaseFirestore.instance.collection('Reminders').doc(docID);
+    await documentReference.set(data, SetOptions(merge: true));
+  }
+}
+
+Future<void> removeReminderFromDb(int id) async {
+  final docID = await getDocumentID(id, 'Reminders');
+  if (docID.isEmpty) return;
+  await FirebaseFirestore.instance.collection('Reminders').doc(docID).delete();
+}
+
+Future<List<Reminder>> loadRemindersForUser(String ownerUsername) async {
+  List<Reminder> reminders = [];
+  final QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+      .collection('Reminders')
+      .where('ownerUsername', isEqualTo: ownerUsername)
+      .get();
+
+  for (var doc in querySnapshot.docs) {
+    final data = doc.data();
+    reminders.add(Reminder.fromMap(data));
+  }
+  reminders.sort((a, b) => a.date.compareTo(b.date));
+  return reminders;
+}
+
+Future<List<Reminder>> loadRemindersForCar(int carId) async {
+  List<Reminder> reminders = [];
+  final QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+      .collection('Reminders')
+      .where('carId', isEqualTo: carId)
+      .get();
+
+  for (var doc in querySnapshot.docs) {
+    final data = doc.data();
+    reminders.add(Reminder.fromMap(data));
+  }
+  reminders.sort((a, b) => a.date.compareTo(b.date));
+  return reminders;
 }

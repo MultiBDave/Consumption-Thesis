@@ -1,3 +1,5 @@
+// Temporary: ignore deprecated MaterialState* APIs until FlutterFlow helpers are migrated.
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -29,7 +31,7 @@ class FlutterFlowIconButton extends StatefulWidget {
   final Color? borderColor;
   final double? borderWidth;
   final bool showLoadingIndicator;
-  final Function()? onPressed;
+  final Future<void> Function()? onPressed;
 
   @override
   State<FlutterFlowIconButton> createState() => _FlutterFlowIconButtonState();
