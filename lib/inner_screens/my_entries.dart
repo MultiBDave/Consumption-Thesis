@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/reminder.dart';
 
-import '../auth_screens/home_screen.dart';
+import '../auth_screens/login_screen.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_icon_button.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
@@ -14,7 +14,9 @@ import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
 import '../../components/components.dart';
 import '../main.dart';
+import '../home_page.dart';
 import 'car_fuel_entries_screen.dart';
+import 'car_details.dart';
 // imports intentionally removed (unused)
 
 enum Operation { modify, add }
@@ -490,17 +492,25 @@ class _MyEntriesState extends State<MyEntries> {
           IconButton(
             icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
             color: isLoggedIn ? Colors.black : Colors.white,
-            onPressed: () {
+            onPressed: () async {
               if (isLoggedIn) {
-                // Logout
-                FirebaseAuth.instance.signOut();
+                // Logout: sign out, clear local state, and return to the
+                // root HomePage so the default tab (search/list) is shown.
+                await FirebaseAuth.instance.signOut();
                 setState(() {
                   isLoggedIn = false;
                   ownCars.clear();
                 });
+                // Replace the entire navigator stack with HomePage (root navigator)
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  (route) => false,
+                );
               } else {
-                // Navigate to login screen
-                Navigator.of(context).pushNamed(HomeScreen.id);
+                // Navigate to login screen using an explicit MaterialPageRoute
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ));
               }
             },
           ),
@@ -670,6 +680,24 @@ class _MyEntriesState extends State<MyEntries> {
                                 final navigator = Navigator.of(context);
                                 await navigator.push(MaterialPageRoute(
                                   builder: (c) => CarFuelEntriesScreen(car: car),
+                                ));
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            FlutterFlowIconButton(
+                              borderRadius: 20,
+                              borderWidth: 1,
+                              buttonSize: 40,
+                              fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                              icon: Icon(
+                                Icons.info_outline,
+                                color: FlutterFlowTheme.of(context).primaryBackground,
+                                size: 20,
+                              ),
+                              onPressed: () async {
+                                final navigator = Navigator.of(context);
+                                await navigator.push(MaterialPageRoute(
+                                  builder: (c) => CarDetailsScreen(car: car),
                                 ));
                               },
                             ),

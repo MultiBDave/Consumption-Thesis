@@ -1,6 +1,6 @@
 // ignore_for_file: library_private_types_in_public_api
 
-import 'package:consumption/auth_screens/home_screen.dart';
+import '../auth_screens/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,9 +8,11 @@ import 'package:flutter/services.dart';
 import '../helper/firebase.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../main.dart';
+import '../home_page.dart';
 import '../models/car_entry.dart';
 import '../models/home_page_model.dart';
 export '../models/home_page_model.dart';
+import 'car_details.dart';
 
 class ListCarsScreen extends StatefulWidget {
   const ListCarsScreen({super.key});
@@ -253,17 +255,22 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
           IconButton(
             icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
             color: isLoggedIn ? Colors.black : Colors.white,
-            onPressed: () {
+            onPressed: () async {
               if (isLoggedIn) {
-                // Logout
-                FirebaseAuth.instance.signOut();
+                // Logout: sign out and navigate to HomePage (root navigator)
+                await FirebaseAuth.instance.signOut();
                 setState(() {
-                  Navigator.of(context).pushNamed(ListCarsScreen.id);
                   isLoggedIn = false;
                 });
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  (route) => false,
+                );
               } else {
-                // Navigate to login screen
-                Navigator.of(context).pushNamed(HomeScreen.id);
+                // Navigate to login screen using an explicit MaterialPageRoute
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ));
               }
             },
           ),
@@ -313,167 +320,175 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                 itemCount: filteredAllCars.length,
                 itemBuilder: (BuildContext context, int index) {
                   final car = filteredAllCars[index];
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 6,
-                          color: getColorFromString(car.color),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${car.make} ${car.model}',
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (c) => CarDetailsScreen(car: car)),
+                      );
+                    },
+                    child: Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 6,
+                            color: getColorFromString(car.color),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${car.make} ${car.model}',
+                                        style: FlutterFlowTheme.of(context)
+                                            .titleMedium
+                                            .override(
+                                              fontFamily: 'Readex Pro',
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${car.year}',
                                       style: FlutterFlowTheme.of(context)
-                                          .titleMedium
+                                          .titleSmall
                                           .override(
                                             fontFamily: 'Readex Pro',
-                                            fontWeight: FontWeight.bold,
                                             color: Colors.black,
                                           ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${car.year}',
-                                    style: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .override(
-                                          fontFamily: 'Readex Pro',
-                                          color: Colors.black,
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.local_gas_station,
+                                      size: 16,
+                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Consumption: ${car.consumption} L/100km',
+                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (car.tankSize > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.map,
+                                          size: 16,
+                                          color: FlutterFlowTheme.of(context).primary,
                                         ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.local_gas_station,
-                                    size: 16,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Consumption: ${car.consumption} L/100km',
-                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                      color: Colors.black,
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Est. range: ${car.estimatedRange}',
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                                fontFamily: 'Readex Pro',
+                                                color: Colors.black,
+                                              ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              if (car.tankSize > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.map,
-                                        size: 16,
-                                        color: FlutterFlowTheme.of(context).primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Est. range: ${car.estimatedRange}',
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.speed,
+                                      size: 16,
+                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${car.drivenKm} km',
+                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: 'Readex Pro',
+                                            color: Colors.black,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      size: 16,
+                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        'Owner: ${car.ownerUsername}',
                                         style: FlutterFlowTheme.of(context).bodyMedium.override(
                                               fontFamily: 'Readex Pro',
                                               color: Colors.black,
                                             ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.speed,
-                                    size: 16,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${car.drivenKm} km',
-                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                          fontFamily: 'Readex Pro',
-                                          color: Colors.black,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.person,
-                                    size: 16,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      'Owner: ${car.ownerUsername}',
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 16,
+                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        'Location: ${car.location}',
+                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                              fontFamily: 'Readex Pro',
+                                              color: Colors.black,
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.car_repair,
+                                      size: 16,
+                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      car.type,
                                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                                             fontFamily: 'Readex Pro',
                                             color: Colors.black,
                                           ),
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    size: 16,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      'Location: ${car.location}',
-                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                            fontFamily: 'Readex Pro',
-                                            color: Colors.black,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    Icons.car_repair,
-                                    size: 16,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    car.type,
-                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                          fontFamily: 'Readex Pro',
-                                          color: Colors.black,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },

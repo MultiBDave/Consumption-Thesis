@@ -11,6 +11,8 @@ class CarEntry {
   int initialKm = 0; // Initial mileage for used cars
   int fuelSum = 0;
   int tankSize = 0; // Tank size in liters
+  String imageUrl = '';
+  String description = '';
   String consumption = "";
   String estimatedRange = ""; // Estimated range with full tank
 
@@ -26,6 +28,8 @@ class CarEntry {
     required this.drivenKm,
     this.initialKm = 0,
     this.tankSize = 0,
+    this.imageUrl = '',
+    this.description = '',
   });
 
   CarEntry.fuel({
@@ -41,6 +45,8 @@ class CarEntry {
     required this.fuelSum,
     this.initialKm = 0,
     this.tankSize = 0,
+    this.imageUrl = '',
+    this.description = '',
   });
 
   String getConsumption() {

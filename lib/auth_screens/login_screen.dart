@@ -85,9 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           question: 'Forgot password?',
                           buttonPressed: () async {
                             FocusManager.instance.primaryFocus?.unfocus();
-                            // Capture navigator/context before awaiting to avoid
-                            // using BuildContext after async gaps.
-                            final navigator = Navigator.of(context);
+                            // Capture context before awaiting to avoid using BuildContext after async gaps.
 
                             setState(() {
                               _saving = true;
@@ -100,8 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               setState(() {
                                 _saving = false;
                               });
-                              navigator.popAndPushNamed(LoginScreen.id);
-                              navigator.pushNamed(HomePage.id);
+                              // Ensure we navigate on the root navigator to replace
+                              // the authentication screens with the main HomePage.
+                              Navigator.of(context, rootNavigator: true).pushReplacement(
+                                MaterialPageRoute(builder: (context) => const HomePage()),
+                              );
                             } catch (e) {
                               if (!mounted) return;
                               // Use current context immediately after mounted check
@@ -112,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   setState(() {
                                     _saving = false;
                                   });
-                                  navigator.popAndPushNamed(LoginScreen.id);
+                                  Navigator.of(context).pop();
                                 },
                                 title: 'WRONG PASSWORD OR EMAIL',
                                 desc:
