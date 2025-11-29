@@ -18,7 +18,12 @@ class _PersistentBottomBarScaffoldState
   bool canSwitchToMyEntries(int index) {
     if (FirebaseAuth.instance.currentUser == null && index == 1) {
       // Navigate to the LoginScreen if no user is logged in
-      Navigator.of(context).pushReplacementNamed(LoginScreen.id);
+      // Use the root navigator and a direct MaterialPageRoute so the
+      // nested tab Navigators (which don't have named routes) don't
+      // cause onGenerateRoute null errors.
+      Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ));
       return false;
     } else {
       // Implement your condition here, return true if the user can switch to the tab

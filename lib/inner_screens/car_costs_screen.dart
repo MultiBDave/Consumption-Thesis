@@ -201,14 +201,14 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
         value: fuel,
         title: '${fuelPct.toStringAsFixed(0)}%',
         radius: 72,
-        titleStyle: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold),
+        titleStyle: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
       ),
       PieChartSectionData(
         color: Theme.of(context).colorScheme.secondary,
         value: extra,
         title: '${extraPct.toStringAsFixed(0)}%',
         radius: 72,
-        titleStyle: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold),
+        titleStyle: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
       ),
     ];
 
@@ -231,7 +231,7 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
           children: [
             _legendItem(Theme.of(context).colorScheme.primary, 'Fuel', fuel),
             const SizedBox(width: 16),
-            _legendItem(Theme.of(context).colorScheme.secondary, 'Extra', extra),
+            _legendItem(Theme.of(context).colorScheme.secondary, 'Maintenance', extra),
           ],
         ),
       ],
@@ -270,7 +270,7 @@ class _CarCostsScreenState extends State<CarCostsScreen> {
         value: sum,
         title: '${pct.toStringAsFixed(0)}%',
         radius: 58,
-        titleStyle: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+        titleStyle: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
       ));
       i++;
     });
