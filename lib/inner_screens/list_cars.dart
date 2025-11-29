@@ -256,19 +256,23 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
             icon: Icon(isLoggedIn ? Icons.lock_open : Icons.lock),
             color: isLoggedIn ? Colors.black : Colors.white,
             onPressed: () async {
+              // Capture the root navigator before awaiting to avoid using
+              // BuildContext across async gaps.
+              final rootNav = Navigator.of(context, rootNavigator: true);
               if (isLoggedIn) {
                 // Logout: sign out and navigate to HomePage (root navigator)
                 await FirebaseAuth.instance.signOut();
+                if (!mounted) return;
                 setState(() {
                   isLoggedIn = false;
                 });
-                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                rootNav.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const HomePage()),
                   (route) => false,
                 );
               } else {
                 // Navigate to login screen using an explicit MaterialPageRoute
-                Navigator.of(context).push(MaterialPageRoute(
+                rootNav.push(MaterialPageRoute(
                   builder: (context) => const LoginScreen(),
                 ));
               }
