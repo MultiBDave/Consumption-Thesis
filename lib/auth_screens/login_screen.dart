@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../components/components.dart';
 import '../home_page.dart';
+import '../helper/firebase.dart' as fb;
+import '../models/reminder.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -94,14 +96,31 @@ class _LoginScreenState extends State<LoginScreen> {
                               await auth.signInWithEmailAndPassword(
                                   email: _email, password: _password);
                               if (!mounted) return;
-                              // stop loading first, then navigate
+                              // stop loading first
                               setState(() {
                                 _saving = false;
                               });
-                              // Ensure we navigate on the root navigator to replace
-                              // the authentication screens with the main HomePage.
+
+                              // After successful sign-in, prepare overdue reminders and navigate
+                              final user = FirebaseAuth.instance.currentUser;
+                              List<Reminder>? overdueReminders;
+                              if (user != null) {
+                                final reminders = await fb.loadRemindersForUser(user.email!);
+                                final now = DateTime.now();
+                                final overdue = reminders.where((r) {
+                                  final isService = r.title.toLowerCase().startsWith('service due');
+                                  final isPast = r.date.isBefore(now) || (r.date.year == now.year && r.date.month == now.month && r.date.day == now.day);
+                                  return isService && isPast;
+                                }).toList();
+
+                                if (overdue.isNotEmpty) {
+                                  overdueReminders = overdue;
+                                }
+                              }
+
+                              // Navigate to HomePage and pass the overdue reminders (if any).
                               Navigator.of(context, rootNavigator: true).pushReplacement(
-                                MaterialPageRoute(builder: (context) => const HomePage()),
+                                MaterialPageRoute(builder: (context) => HomePage(overdueReminders: overdueReminders)),
                               );
                             } catch (e) {
                               if (!mounted) return;

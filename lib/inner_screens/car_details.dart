@@ -1,45 +1,73 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:consumption/helper/firebase.dart' as fb;
+import '../helper/firebase.dart' as fb;
+import '../models/reminder.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import '../helper/date_utils.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../models/car_entry.dart';
 import '../models/extra_cost.dart';
 import '../models/fuel_entry.dart';
+import '../models/service_item.dart';
 
 class CarDetailsScreen extends StatefulWidget {
   final CarEntry car;
-  const CarDetailsScreen({super.key, required this.car});
+  final bool openServices;
+  const CarDetailsScreen({super.key, required this.car, this.openServices = false});
 
   @override
   State<CarDetailsScreen> createState() => _CarDetailsScreenState();
 }
 
 class _CarDetailsScreenState extends State<CarDetailsScreen> {
+  final GlobalKey _servicesKey = GlobalKey();
   String? imageUrl;
   String description = '';
   String imageDescription = '';
   List<ExtraCost> costs = [];
   List<FuelEntry> fuelEntries = [];
+  List<ServiceItem> services = [];
   bool isOwner = false;
   bool loading = true;
   late TextEditingController _descriptionController;
   late TextEditingController _imageDescriptionController;
+  // Service interval controllers
+  late TextEditingController _lastServiceOdometerController;
+  late TextEditingController _serviceIntervalKmController;
+  late TextEditingController _serviceIntervalMonthsController;
 
   @override
   void initState() {
     super.initState();
     _descriptionController = TextEditingController();
     _imageDescriptionController = TextEditingController();
+    _lastServiceOdometerController = TextEditingController(text: widget.car.lastServiceOdometer.toString());
+    _serviceIntervalKmController = TextEditingController(text: widget.car.serviceIntervalKm.toString());
+    _serviceIntervalMonthsController = TextEditingController(text: widget.car.serviceIntervalMonths.toString());
     _loadDetails();
   }
+
+  // Common maintenance presets (label, default km interval, default months interval)
+  final List<Map<String, dynamic>> _servicePresets = [
+    {'label': 'Oil change', 'km': 10000, 'months': 6},
+    {'label': 'Tyre rotation', 'km': 10000, 'months': 6},
+    {'label': 'Brake check / pads', 'km': 30000, 'months': 12},
+    {'label': 'Air filter', 'km': 20000, 'months': 12},
+    {'label': 'Timing belt', 'km': 100000, 'months': 60},
+    {'label': 'Battery check', 'km': 24000, 'months': 12},
+    {'label': 'Transmission service', 'km': 60000, 'months': 48},
+    {'label': 'Coolant change', 'km': 50000, 'months': 36},
+  ];
 
   @override
   void dispose() {
     _descriptionController.dispose();
     _imageDescriptionController.dispose();
+    _lastServiceOdometerController.dispose();
+    _serviceIntervalKmController.dispose();
+    _serviceIntervalMonthsController.dispose();
     super.dispose();
   }
 
@@ -62,15 +90,82 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
 
     costs = await fb.loadExtraCostsForCar(widget.car.id);
     fuelEntries = await fb.loadFuelEntriesForCar(widget.car.id);
+    // Load services and ensure defaults exist
+    services = await _loadServicesForCarLocal(widget.car.id);
+    final defaults = {
+      'Timing belt/ Timing chain change': {'km': 70000, 'months': 60},
+      'Oil change': {'km': 10000, 'months': 12},
+      'Transmission fluid change': {'km': 60000, 'months': 60},
+      'Tyre balance/change': {'km': 20000, 'months': 12},
+      'Suspension check': {'km': 20000, 'months': 12},
+    };
+    for (var key in defaults.keys) {
+      final exists = services.any((s) => s.name == key);
+      if (!exists) {
+        final now = DateTime.now();
+        final preset = defaults[key]!;
+        final service = ServiceItem(
+          id: now.millisecondsSinceEpoch + key.hashCode,
+          carId: widget.car.id,
+          name: key,
+          lastKm: 0,
+          lastDate: null,
+          intervalKm: preset['km'] as int,
+          intervalMonths: preset['months'] as int,
+          ownerUsername: widget.car.ownerUsername,
+        );
+        await _addServiceLocal(service);
+        services.add(service);
+      }
+    }
 
     // ensure controller is synced with loaded description
     _descriptionController.text = description;
     _imageDescriptionController.text = imageDescription;
-
+    // sync controllers for service defaults (if any)
+    if (services.isNotEmpty) {
+      // keep controllers ready; UI uses per-item controllers where needed
+    }
     setState(() {
       loading = false;
     });
+
+    // If requested, scroll to the services card after the frame
+    if (widget.openServices) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _servicesKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+        }
+      });
+    }
   }
+
+  // Local service helpers (use Firestore directly to avoid cross-import issues)
+  Future<List<ServiceItem>> _loadServicesForCarLocal(int carId) async {
+    List<ServiceItem> services = [];
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('Services').where('carId', isEqualTo: carId).get();
+    for (var doc in querySnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      services.add(ServiceItem.fromMap(data));
+    }
+    return services;
+  }
+
+  Future<void> _addServiceLocal(ServiceItem service) async {
+    final data = service.toMap();
+    await FirebaseFirestore.instance.collection('Services').add(data);
+  }
+
+  Future<void> _updateServiceLocal(ServiceItem service) async {
+    final snap = await FirebaseFirestore.instance.collection('Services').where('id', isEqualTo: service.id).limit(1).get();
+    if (snap.docs.isNotEmpty) {
+      await snap.docs.first.reference.set(service.toMap(), SetOptions(merge: true));
+    } else {
+      await FirebaseFirestore.instance.collection('Services').add(service.toMap());
+    }
+  }
+
 
   Future<void> _showSetImageUrlDialog() async {
     final controller = TextEditingController(text: imageUrl ?? '');
@@ -365,6 +460,51 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                                     ],
                                   ),
                                 ),
+                                // Active toggle for owners (hidden entirely for non-owners)
+                                Builder(builder: (ctx) {
+                                  final userEmail = FirebaseAuth.instance.currentUser?.email;
+                                  final isOwner = userEmail != null && userEmail == car.ownerUsername;
+                                  if (!isOwner) return const SizedBox.shrink();
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text('Active', style: TextStyle(fontSize: 12)),
+                                      Switch(
+                                        value: car.active,
+                                        onChanged: (val) async {
+                                          final scaffold = ScaffoldMessenger.of(ctx);
+                                          setState(() => car.active = val);
+                                          await fb.modifyCarEntryInDb(car);
+                                          if (val) {
+                                            final existing = await fb.loadRemindersForUser(car.ownerUsername);
+                                            final exists = existing.any((r) => r.carId == car.id && r.title == 'Tyre pressure check');
+                                            if (!exists) {
+                                              final now = DateTime.now();
+                                              final rem = Reminder(
+                                                id: now.millisecondsSinceEpoch,
+                                                carId: car.id,
+                                                title: 'Tyre pressure check',
+                                                description: 'Monthly tyre pressure check',
+                                                date: addMonths(now, 1),
+                                                ownerUsername: car.ownerUsername,
+                                              );
+                                              await fb.addReminderToDb(rem);
+                                            }
+                                            if (!mounted) return;
+                                            scaffold.showSnackBar(const SnackBar(content: Text('Car activated — tyre reminders enabled')));
+                                          } else {
+                                            final existing = await fb.loadRemindersForUser(car.ownerUsername);
+                                            for (var r in existing.where((r) => r.carId == car.id && r.title == 'Tyre pressure check')) {
+                                              await fb.removeReminderFromDb(r.id);
+                                            }
+                                            if (!mounted) return;
+                                            scaffold.showSnackBar(const SnackBar(content: Text('Car deactivated — tyre reminders removed')));
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                }),
                               ],
                             ),
                             const Divider(height: 24),
@@ -558,6 +698,118 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                           ],
                         ),
                         const SizedBox(height: 40),
+                        // Service / maintenance settings (owners only)
+                          if (isOwner)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Card(
+                              key: _servicesKey,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Service & maintenance', style: FlutterFlowTheme.of(context).titleMedium.copyWith(color: Colors.black)),
+                                    const SizedBox(height: 6),
+                                    // (Preset/quick inputs removed — only per-service rows shown)
+                                    const SizedBox(height: 12),
+                                    // Per-service list (compact)
+                                    const SizedBox(height: 8),
+                                    ...services.map((s) {
+                                      final TextEditingController lastKmCtrl = TextEditingController(text: s.lastKm.toString());
+                                      final TextEditingController intKmCtrl = TextEditingController(text: s.intervalKm.toString());
+                                      final TextEditingController intMoCtrl = TextEditingController(text: s.intervalMonths.toString());
+                                      // compute next due date if possible
+                                      DateTime? nextDueDate;
+                                      if (s.lastDate != null && s.intervalMonths > 0) {
+                                        try {
+                                          nextDueDate = addMonths(s.lastDate!, s.intervalMonths);
+                                        } catch (_) {
+                                          nextDueDate = null;
+                                        }
+                                      }
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 3,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                                  if (nextDueDate != null)
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(top: 2.0),
+                                                      child: Text('Next due: ${DateFormat('MMM d, yyyy').format(nextDueDate)}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            SizedBox(
+                                              width: 90,
+                                              child: TextField(controller: lastKmCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Last km', isDense: true, border: OutlineInputBorder())),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            SizedBox(
+                                              width: 90,
+                                              child: TextField(controller: intKmCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Int km', isDense: true, border: OutlineInputBorder())),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            SizedBox(
+                                              width: 80,
+                                              child: TextField(controller: intMoCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Mo', isDense: true, border: OutlineInputBorder())),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              icon: const Icon(Icons.calendar_today),
+                                              tooltip: 'Set last service date',
+                                              onPressed: () async {
+                                                final picked = await showDatePicker(context: context, initialDate: s.lastDate ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now().add(const Duration(days: 3650)));
+                                                if (picked != null) {
+                                                  s.lastDate = picked;
+                                                  await _updateServiceLocal(s);
+                                                  setState(() {});
+                                                }
+                                              },
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                s.lastKm = int.tryParse(lastKmCtrl.text) ?? s.lastKm;
+                                                s.intervalKm = int.tryParse(intKmCtrl.text) ?? s.intervalKm;
+                                                s.intervalMonths = int.tryParse(intMoCtrl.text) ?? s.intervalMonths;
+                                                await _updateServiceLocal(s);
+                                                // also create/update a date-based reminder if intervalMonths set
+                                                  if (s.lastDate != null && s.intervalMonths > 0) {
+                                                    final nextDate = addMonths(s.lastDate!, s.intervalMonths);
+                                                  final existing = await fb.loadRemindersForUser(s.ownerUsername);
+                                                  final matches = existing.where((r) => r.carId == s.carId && r.title == 'Service due: ${s.name}').toList();
+                                                  if (matches.isNotEmpty) {
+                                                    final ex = matches.first;
+                                                    ex.date = nextDate;
+                                                    await fb.updateReminderInDb(ex);
+                                                  } else {
+                                                    final now = DateTime.now();
+                                                    final rem = Reminder(id: now.millisecondsSinceEpoch + s.name.hashCode, carId: s.carId!, title: 'Service due: ${s.name}', description: 'Scheduled service for ${s.name}', date: nextDate, ownerUsername: s.ownerUsername);
+                                                    await fb.addReminderToDb(rem);
+                                                  }
+                                                }
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Service saved')));
+                                                setState(() {});
+                                              },
+                                              child: const Text('Save'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

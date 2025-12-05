@@ -2,11 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/service_item.dart';
+import '../models/reminder.dart';
 // chart removed: fl_chart import not needed here
 import 'car_costs_screen.dart';
-import '../helper/firebase.dart';
+import '../helper/firebase.dart' as fb;
 // ...existing imports
 import '../helper/flutter_flow/flutter_flow_theme.dart';
+import '../helper/date_utils.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
 
@@ -46,7 +50,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
     });
 
     try {
-      final entries = await loadFuelEntriesForCar(widget.car.id);
+      final entries = await fb.loadFuelEntriesForCar(widget.car.id);
       setState(() {
         fuelEntries = entries;
         isLoading = false;
@@ -83,7 +87,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
 
     if (confirmed ?? false) {
       try {
-        await removeFuelEntryFromDb(entry.id);
+        await fb.removeFuelEntryFromDb(entry.id);
         _loadFuelEntries();
         // Recalculate car's consumption
         updateCarConsumption();
@@ -97,9 +101,9 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
   }
 
   Future<void> updateCarConsumption() async {
-    double consumption = await calculateConsumptionFromEntries(
-      widget.car.id, 
-      widget.car.initialKm
+    double consumption = await fb.calculateConsumptionFromEntries(
+      widget.car.id,
+      widget.car.initialKm,
     );
 
     setState(() {
@@ -124,7 +128,32 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
     });
 
     // Update in database
-    await modifyCarEntryInDb(widget.car);
+    await fb.modifyCarEntryInDb(widget.car);
+
+    // After odometer update, check km-based service reminders and create reminders if thresholds reached
+    try {
+      final qs = await FirebaseFirestore.instance.collection('Services').where('carId', isEqualTo: widget.car.id).get();
+      final services = qs.docs.map((d) => ServiceItem.fromMap(d.data() as Map<String, dynamic>)).toList();
+      final existingReminders = await fb.loadRemindersForUser(widget.car.ownerUsername);
+      for (var s in services) {
+        if (s.intervalKm > 0) {
+          final dueKm = s.lastKm + s.intervalKm;
+          if (widget.car.drivenKm >= dueKm) {
+            final title = 'Service due: ${s.name}';
+            final exists = existingReminders.any((r) => r.carId == s.carId && r.title == title);
+            if (!exists) {
+              final now = DateTime.now();
+              final rem = Reminder(id: now.millisecondsSinceEpoch + s.name.hashCode, carId: s.carId, title: title, description: 'Car has reached $dueKm km for ${s.name}', date: now, ownerUsername: s.ownerUsername);
+              await fb.addReminderToDb(rem);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Service due created: ${s.name}')));
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // ignore; non-critical
+    }
   }
 
   void _showAddEditFuelDialog({FuelEntry? existingEntry}) {
@@ -291,7 +320,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                   );
 
                   // Load all existing entries and include the candidate, then validate odometer monotonicity by date
-                  List<FuelEntry> allEntries = await loadFuelEntriesForCar(widget.car.id);
+                  List<FuelEntry> allEntries = await fb.loadFuelEntriesForCar(widget.car.id);
                   if (isEditing) {
                     allEntries = allEntries.map((e) => e.id == candidateId ? candidateEntry : e).toList();
                   } else {
@@ -335,15 +364,49 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                     existingEntry.odometer = odometer;
                     existingEntry.cost = parsedCost;
                     existingEntry.date = selectedDate;
-                    await updateFuelEntry(existingEntry);
+                    await fb.updateFuelEntry(existingEntry);
                   } else {
-                    await addFuelEntryToDb(candidateEntry);
+                    await fb.addFuelEntryToDb(candidateEntry);
                   }
                   await _loadFuelEntries();
                   await updateCarConsumption();
                   if (!mounted) return;
                   // Close the dialog (use the dialog's navigator, not the parent)
                   navigator.pop();
+
+                  // After adding a new fuel entry for an active car, prompt to schedule a tyre-pressure check
+                  if (!isEditing && widget.car.active) {
+                    final confirm = await showDialog<bool>(
+                      context: parentContext,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Tyre-pressure check'),
+                        content: const Text('Would you like to schedule a monthly tyre-pressure check reminder for this car?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
+                          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Yes')),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      final now = DateTime.now();
+                      final rem = Reminder(
+                        id: now.millisecondsSinceEpoch,
+                        carId: widget.car.id,
+                        title: 'Tyre pressure check',
+                        description: 'Monthly tyre pressure check',
+                        date: addMonths(now, 1),
+                        ownerUsername: widget.car.ownerUsername,
+                      );
+                      try {
+                        await fb.addReminderToDb(rem);
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(parentContext).showSnackBar(const SnackBar(content: Text('Tyre reminder scheduled')));
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(content: Text('Could not schedule reminder: $e')));
+                      }
+                    }
+                  }
                 } catch (e) {
                   if (!mounted) return;
                   // Show error on the parent scaffold to ensure visibility

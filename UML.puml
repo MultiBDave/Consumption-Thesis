@@ -1,0 +1,98 @@
+@startuml
+title Consumption-Thesis - Core Class Diagram
+
+package "Models" {
+  class CarEntry {
+    +String id
+    +String make
+    +String model
+    +int year
+    +String color
+    +String ownerUsername
+    +double drivenKm
+    +bool active
+    +double tankSize
+    +double fuelSum
+    +String imageUrl
+    +String description
+    +updateConsumption()
+  }
+
+  class FuelEntry {
+    +String id
+    +String carId
+    +Date date
+    +double liters
+    +int odometer
+    +double cost
+  }
+
+  class ServiceItem {
+    +String id
+    +String carId
+    +String name
+    +int lastKm
+    +Date lastDate
+    +int intervalKm
+    +int intervalMonths
+  }
+
+  class Reminder {
+    +String id
+    +String? carId
+    +String title
+    +String description
+    +Date date
+    +Date? snoozedUntil
+    +Date? previousDate
+    +String ownerUsername
+  }
+
+  class ExtraCost {
+    +String id
+    +String carId
+    +Date date
+    +double amount
+    +String category
+    +String description
+  }
+}
+
+package "Helpers" {
+  class FirebaseHelper {
+    +addCarEntryToDb(carEntry)
+    +loadCarEntrysFromFirestore()
+    +addReminderToDb(reminder)
+    +updateReminderInDb(reminder)
+  }
+
+  class DateUtils {
+    +static Date addMonths(Date date, int months)
+  }
+
+  class CalendarWidget {
+    +renderCalendar(events)
+    +eventCache
+  }
+}
+
+CarEntry "1" -- "*" FuelEntry : has
+CarEntry "1" -- "*" ServiceItem : has
+CarEntry "1" -- "*" Reminder : may_have
+CarEntry "1" -- "*" ExtraCost : has
+ServiceItem "1" -- "0..1" Reminder : triggers
+FuelEntry "1" -- "0..1" Reminder : may_trigger
+
+FirebaseHelper ..> CarEntry
+FirebaseHelper ..> FuelEntry
+FirebaseHelper ..> ServiceItem
+FirebaseHelper ..> Reminder
+DateUtils ..> ServiceItem
+CalendarWidget ..> Reminder
+
+note as N1
+This diagram summarizes core domain classes and helpers.
+`Reminder.previousDate` is used to implement Undo for snooze.
+end note
+
+@enduml

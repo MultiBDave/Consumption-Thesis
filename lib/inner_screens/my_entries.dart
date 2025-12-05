@@ -7,8 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/reminder.dart';
 
 import '../auth_screens/login_screen.dart';
-import '../helper/firebase.dart';
+import '../helper/firebase.dart' as fb;
 import '../helper/flutter_flow/flutter_flow_icon_button.dart';
+import '../helper/flutter_flow/flutter_flow_calendar.dart';
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../models/car_entry.dart';
 import '../models/fuel_entry.dart';
@@ -72,7 +73,7 @@ class _MyEntriesState extends State<MyEntries> {
 
   Future<List<CarEntry>> _loadCarEntryData() async {
     // Load the data asynchronously
-    final data = await loadCarEntrysFromFirestore();
+    final data = await fb.loadCarEntrysFromFirestore();
 
     // Return the loaded data
     return data;
@@ -114,7 +115,7 @@ class _MyEntriesState extends State<MyEntries> {
       setState(() => todaysReminderCount = 0);
       return;
     }
-    final all = await loadRemindersForUser(user.email!);
+    final all = await fb.loadRemindersForUser(user.email!);
     final now = DateTime.now();
     final count = all.where((r) => r.date.year == now.year && r.date.month == now.month && r.date.day == now.day).length;
     setState(() => todaysReminderCount = count);
@@ -171,7 +172,7 @@ class _MyEntriesState extends State<MyEntries> {
     );
 
     if (confirmed ?? false) {
-      await removeCarEntryFromDb(car.id);
+      await fb.removeCarEntryFromDb(car.id);
       setState(() {
         removeEntry(car.id);
       });
@@ -218,8 +219,8 @@ class _MyEntriesState extends State<MyEntries> {
                   Future<void> loadData() async {
                     final user = FirebaseAuth.instance.currentUser;
                     if (user != null) {
-                      reminders = await loadRemindersForUser(user.email!);
-                      final cars = await loadCarEntrysFromFirestore();
+                      reminders = await fb.loadRemindersForUser(user.email!);
+                      final cars = await fb.loadCarEntrysFromFirestore();
                       ownCars = cars.where((c) => c.ownerUsername == user.email).toList();
                     }
                   }
@@ -242,16 +243,31 @@ class _MyEntriesState extends State<MyEntries> {
                               height: 420,
                               child: Column(
                                 children: [
-                                  CalendarDatePicker(
-                                    initialDate: selectedDate,
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                    onDateChanged: (d) {
-                                      setState(() {
-                                        selectedDate = d;
-                                      });
-                                    },
-                                  ),
+                                  // Build an events map grouped by start-of-day for the custom calendar
+                                  Builder(builder: (context) {
+                                    final Map<DateTime, List<dynamic>> eventsMap = {};
+                                    for (final r in reminders) {
+                                      final key = DateTime(r.date.year, r.date.month, r.date.day);
+                                      eventsMap.putIfAbsent(key, () => []).add(r);
+                                    }
+
+                                    return FlutterFlowCalendar(
+                                      color: FlutterFlowTheme.of(context).primary,
+                                      initialDate: selectedDate,
+                                      events: eventsMap,
+                                      // Fix: constrain row height inside the dialog so
+                                      // the calendar doesn't compute a huge rowHeight
+                                      // from the overall screen width and overflow.
+                                      rowHeight: 48,
+                                      onChange: (range) {
+                                        if (range != null) {
+                                          setState(() {
+                                            selectedDate = range.start;
+                                          });
+                                        }
+                                      },
+                                    );
+                                  }),
                                   const SizedBox(height: 8),
                                   Expanded(
                                     child: dayReminders.isEmpty
@@ -269,7 +285,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                       if (matched.isNotEmpty) {
                                                         final carToOpen = matched.first;
                                                         Navigator.of(parentContext).pop();
-                                                        Navigator.push(parentContext, MaterialPageRoute(builder: (ctx) => CarFuelEntriesScreen(car: carToOpen)));
+                                                        Navigator.push(parentContext, MaterialPageRoute(builder: (ctx) => CarDetailsScreen(car: carToOpen, openServices: true)));
                                                       }
                                                     }
                                                   },
@@ -340,7 +356,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                                       r.description = descController.text;
                                                                       r.carId = selectedCar;
                                                                       r.date = editDate;
-                                                                      await updateReminderInDb(r);
+                                                                      await fb.updateReminderInDb(r);
                                                                       // Refresh parent's today's badge count so the icon updates
                                                                       await _loadTodaysReminders();
                                                                       Navigator.of(ctx2).pop();
@@ -367,7 +383,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                           ),
                                                         );
                                                         if (ok ?? false) {
-                                                          await removeReminderFromDb(r.id);
+                                                          await fb.removeReminderFromDb(r.id);
                                                           // refresh today's badge
                                                           await _loadTodaysReminders();
                                                           reminders.removeAt(i);
@@ -443,7 +459,7 @@ class _MyEntriesState extends State<MyEntries> {
                                               date: reminderDate,
                                               ownerUsername: user.email ?? '',
                                             );
-                                            await addReminderToDb(newReminder);
+                                            await fb.addReminderToDb(newReminder);
                                             // refresh parent's badge count
                                             await _loadTodaysReminders();
                                             reminders.add(newReminder);
@@ -503,7 +519,7 @@ class _MyEntriesState extends State<MyEntries> {
                 });
                 // Replace the entire navigator stack with HomePage (root navigator)
                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  MaterialPageRoute(builder: (context) => HomePage()),
                   (route) => false,
                 );
               } else {
@@ -867,7 +883,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                     cost: parsedCost,
                                                   );
 
-                                                  await addFuelEntryToDb(newFuelEntry);
+                                                  await fb.addFuelEntryToDb(newFuelEntry);
 
                                                   // Update the car's total fuel and odometer
                                                   setState(() {
@@ -877,7 +893,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                   });
 
                                                   // Update the car in the database
-                                                  await modifyCarEntryInDb(car);
+                                                  await fb.modifyCarEntryInDb(car);
 
                                                   Navigator.of(dialogContext).pop();
 
@@ -996,7 +1012,7 @@ class _MyEntriesState extends State<MyEntries> {
                                                     ),
                                                     onPressed: () {
                                                       setState(() {
-                                                        modifyCarEntryInDb(ownCars[index]);
+                                                        fb.modifyCarEntryInDb(ownCars[index]);
                                                       });
                                                       Navigator.of(context).pop();
                                                       _refreshCarList();
@@ -1148,12 +1164,15 @@ class _MyEntriesState extends State<MyEntries> {
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
-                                  onPressed: () {
+                                  onPressed: () async {
                                     setState(() {
                                       newCar.id = DateTime.now().millisecondsSinceEpoch;
                                       newCar.ownerUsername = auth.currentUser!.email!;
-                                      addCarEntryToDb(newCar);
+                                      // default active logic: if no existing active cars for this user, set active=true
+                                      final hasActive = ownCars.any((c) => c.active == true);
+                                      newCar.active = !hasActive;
                                     });
+                                    await fb.addCarEntryToDb(newCar);
                                     Navigator.of(context).pop();
                                     _refreshCarList();
                                   },

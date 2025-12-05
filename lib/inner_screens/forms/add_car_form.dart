@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 
 import '../../helper/custom_app_bar.dart';
-import '../../helper/firebase.dart';
+import '../../helper/firebase.dart' as fb;
 import '../../helper/flutter_flow/flutter_flow_theme.dart';
 import '../../helper/flutter_flow/flutter_flow_widgets.dart';
 import '../my_entries.dart' as my_entries;
@@ -761,29 +761,35 @@ class _AddCarFormState extends State<AddCarForm> {
                       child: Column(
                         children: [
                           FFButtonWidget(
-                            onPressed: () {
+                            onPressed: () async {
+                              final navigator = Navigator.of(context);
                               setState(() {
-                                // Always update car fields from controllers before saving
-                                widget.car.make = makeController.text;
-                                widget.car.model = modelController.text;
-                                widget.car.year = int.tryParse(yearController.text) ?? 0;
-                                widget.car.color = colorController.text;
-                                widget.car.location = locationController.text;
-                                widget.car.type = typeController.text;
-                                widget.car.drivenKm = int.tryParse(kmController.text) ?? 0;
-                                widget.car.initialKm = int.tryParse(initialKmController.text) ?? 0;
-                                widget.car.tankSize = int.tryParse(tankSizeController.text) ?? 0;
+                                  // Always update car fields from controllers before saving
+                                  widget.car.make = makeController.text;
+                                  widget.car.model = modelController.text;
+                                  widget.car.year = int.tryParse(yearController.text) ?? 0;
+                                  widget.car.color = colorController.text;
+                                  widget.car.location = locationController.text;
+                                  widget.car.type = typeController.text;
+                                  widget.car.drivenKm = int.tryParse(kmController.text) ?? 0;
+                                  widget.car.initialKm = int.tryParse(initialKmController.text) ?? 0;
+                                  widget.car.tankSize = int.tryParse(tankSizeController.text) ?? 0;
+                                });
                                 if (widget.operation == my_entries.Operation.add) {
-                                  // Assign a unique id for new entries
+                                  // Assign a unique id for new entries and set owner
                                   widget.car.id = DateTime.now().millisecondsSinceEpoch;
                                   widget.car.ownerUsername = auth.currentUser!.email!;
-                                  addCarEntryToDb(widget.car);
+                                  // Determine active flag: if the user has no active cars, set this one active
+                                  final all = await fb.loadCarEntrysFromFirestore();
+                                  final userCars = all.where((c) => c.ownerUsername == widget.car.ownerUsername).toList();
+                                  final hasActive = userCars.any((c) => c.active == true);
+                                  widget.car.active = !hasActive;
+                                  await fb.addCarEntryToDb(widget.car);
                                 } else if (widget.operation == my_entries.Operation.modify) {
-                                  modifyCarEntryInDb(widget.car);
+                                  await fb.modifyCarEntryInDb(widget.car);
                                 }
-                                Navigator.of(context).pop();
-                              });
-                            },
+                                navigator.pop();
+                              },
                             text: widget.operation == my_entries.Operation.modify ? 'SAVE CHANGES' : 'ADD',
                             icon: widget.operation == my_entries.Operation.modify
                                 ? const Icon(

@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../helper/firebase.dart';
+import '../helper/firebase.dart' as fb;
 import '../helper/flutter_flow/flutter_flow_theme.dart';
 import '../main.dart';
 import '../home_page.dart';
@@ -54,7 +54,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
   int currentYearMinValue = 1900;
   int currentYearMaxValue = DateTime.now().year;
   String currentColorTextFormFieldValue = '';
-  String currentLocationTextFormFieldValue = '';
   String currentTypeTextFormFieldValue = '';
   int currentKmMaxTextFormFieldValue = 2000000;
   int currentKmMinTextFormFieldValue = 0;
@@ -64,7 +63,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
   TextEditingController minYearController = TextEditingController(text: "1900");
   TextEditingController maxYearController = TextEditingController(text: DateTime.now().year.toString());
   TextEditingController colorController = TextEditingController();
-  TextEditingController locationController = TextEditingController();
   TextEditingController typeController = TextEditingController();
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -90,7 +88,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
 
   Future<List<CarEntry>> _loadCarEntryData() async {
     // Load the data asynchronously
-    final data = await loadCarEntrysFromFirestore();
+    final data = await fb.loadCarEntrysFromFirestore();
 
     // Update consumption and range for all cars
     for (var car in data) {
@@ -164,14 +162,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
           .toList();
     }
 
-    // Filter by Location
-    if (locationController.text.isNotEmpty) {
-      deeperFilteredCars = deeperFilteredCars
-          .where((car) => car.location.toLowerCase().contains(
-                locationController.text.toLowerCase(),
-              ))
-          .toList();
-    }
+    // (location filtering removed)
 
     // Filter by Car Type
     if (typeController.text.isNotEmpty) {
@@ -212,7 +203,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
       minYearController.text = "1900";
       maxYearController.text = DateTime.now().year.toString();
       currentColorTextFormFieldValue = '';
-      locationController.clear();
       typeController.clear();
       currentYearMinValue = 1900;
       currentYearMaxValue = DateTime.now().year;
@@ -267,7 +257,7 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                   isLoggedIn = false;
                 });
                 rootNav.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  MaterialPageRoute(builder: (context) => HomePage()),
                   (route) => false,
                 );
               } else {
@@ -453,40 +443,24 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      size: 16,
-                                      color: FlutterFlowTheme.of(context).secondaryText,
+                                const SizedBox(height: 8),
+                                // Car type shown bottom-right as a small badge
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        'Location: ${car.location}',
-                                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                              fontFamily: 'Readex Pro',
-                                              color: Colors.black,
-                                            ),
-                                        overflow: TextOverflow.ellipsis,
+                                    child: Text(
+                                      car.type,
+                                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                                        fontFamily: 'Readex Pro',
+                                        color: Colors.black,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.car_repair,
-                                      size: 16,
-                                      color: FlutterFlowTheme.of(context).secondaryText,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      car.type,
-                                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                                            fontFamily: 'Readex Pro',
-                                            color: Colors.black,
-                                          ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -625,21 +599,6 @@ class _ListCarsScreenState extends State<ListCarsScreen> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                         controller: locationController,
-                         decoration: InputDecoration(
-                           labelText: 'Location',
-                           enabledBorder: OutlineInputBorder(
-                             borderSide: BorderSide(
-                               color: FlutterFlowTheme.of(context).alternate,
-                               width: 2,
-                             ),
-                             borderRadius: BorderRadius.circular(8),
-                           ),
-                         ),
-                         onChanged:(v){setStateDialog((){});}
-                       ),
-                       const SizedBox(height: 16),
                       Text('Mileage range', style: FlutterFlowTheme.of(context).labelLarge),
                       const SizedBox(height: 8),
                       Row(

@@ -74,7 +74,7 @@ class _MyAppState extends State<MyApp> {
         HomeScreen.id: (context) => const HomeScreen(),
         LoginScreen.id: (context) => const LoginScreen(),
         SignUpScreen.id: (context) => const SignUpScreen(),
-        HomePage.id: (context) => const HomePage(),
+        HomePage.id: (context) => HomePage(),
         ListCarsScreen.id: (context) => const ListCarsScreen(),
       },
     );

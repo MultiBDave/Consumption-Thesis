@@ -15,6 +15,12 @@ class CarEntry {
   String description = '';
   String consumption = "";
   String estimatedRange = ""; // Estimated range with full tank
+  bool active = false; // Whether the car is active/in use
+  // Service interval fields
+  int lastServiceOdometer = 0;
+  DateTime? lastServiceDate;
+  int serviceIntervalKm = 0; // interval in km between services
+  int serviceIntervalMonths = 0; // interval in months between services
 
   CarEntry({
     required this.id,
@@ -30,6 +36,11 @@ class CarEntry {
     this.tankSize = 0,
     this.imageUrl = '',
     this.description = '',
+    this.active = false,
+    this.lastServiceOdometer = 0,
+    this.lastServiceDate,
+    this.serviceIntervalKm = 0,
+    this.serviceIntervalMonths = 0,
   });
 
   CarEntry.fuel({
@@ -47,6 +58,11 @@ class CarEntry {
     this.tankSize = 0,
     this.imageUrl = '',
     this.description = '',
+    this.active = false,
+    this.lastServiceOdometer = 0,
+    this.lastServiceDate,
+    this.serviceIntervalKm = 0,
+    this.serviceIntervalMonths = 0,
   });
 
   String getConsumption() {
@@ -92,4 +108,30 @@ class CarEntry {
         drivenKm = 0,
         initialKm = 0,
         tankSize = 0;
+        
+  DateTime? nextServiceDate() {
+    if (lastServiceDate == null) return null;
+    if (serviceIntervalMonths <= 0) return null;
+    // Add months using calendar-month arithmetic instead of approximating
+    // months as 30 days. This preserves month boundaries (e.g. Jan 31 + 1
+    // month -> Feb 28/29).
+    DateTime addMonths(DateTime date, int months) {
+      final int newMonth = date.month + months;
+      int year = date.year + (newMonth - 1) ~/ 12;
+      int month = ((newMonth - 1) % 12) + 1;
+      // clamp day to last day of target month
+      int day = date.day;
+      int daysInTargetMonth(int y, int m) {
+        final nextMonth = m == 12 ? DateTime(y + 1, 1, 1) : DateTime(y, m + 1, 1);
+        return nextMonth.subtract(const Duration(days: 1)).day;
+      }
+
+      final maxDay = daysInTargetMonth(year, month);
+      if (day > maxDay) day = maxDay;
+      return DateTime(year, month, day, date.hour, date.minute, date.second, date.millisecond, date.microsecond);
+    }
+
+    return addMonths(lastServiceDate!, serviceIntervalMonths);
+  }
+        
 }

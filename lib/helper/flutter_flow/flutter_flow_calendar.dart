@@ -30,6 +30,7 @@ class FlutterFlowCalendar extends StatefulWidget {
   const FlutterFlowCalendar({
     super.key,
     required this.color,
+    this.events,
     this.onChange,
     this.initialDate,
     this.weekFormat = false,
@@ -57,6 +58,7 @@ class FlutterFlowCalendar extends StatefulWidget {
   final TextStyle? titleStyle;
   final double? rowHeight;
   final String? locale;
+  final Map<DateTime, List<dynamic>>? events;
 
   @override
   State<StatefulWidget> createState() => _FlutterFlowCalendarState();
@@ -66,6 +68,8 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
   late DateTime focusedDay;
   late DateTime selectedDay;
   late DateTimeRange selectedRange;
+  // Cached events keyed by YYYYMMDD -> list, to avoid allocating DateTime keys
+  late Map<int, List<dynamic>> _eventsCache;
 
   @override
   void initState() {
@@ -76,8 +80,29 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
       start: selectedDay.startOfDay,
       end: selectedDay.endOfDay,
     );
+    _buildEventsCache();
     SchedulerBinding.instance
         .addPostFrameCallback((_) => setSelectedDay(selectedRange.start));
+  }
+
+  @override
+  void didUpdateWidget(covariant FlutterFlowCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.events != widget.events) {
+      _buildEventsCache();
+    }
+  }
+
+  void _buildEventsCache() {
+    final Map<int, List<dynamic>> map = {};
+    if (widget.events != null) {
+      widget.events!.forEach((key, value) {
+        // normalize key to YYYYMMDD integer to avoid DateTime allocations
+        final int k = key.year * 10000 + key.month * 100 + key.day;
+        map[k] = value;
+      });
+    }
+    _eventsCache = map;
   }
 
   CalendarFormat get calendarFormat =>
@@ -140,6 +165,12 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
           ),
           TableCalendar(
             focusedDay: focusedDay,
+            eventLoader: (date) {
+              // fast lookup via integer keys
+              if (_eventsCache.isEmpty) return <dynamic>[];
+              final int k = date.year * 10000 + date.month * 100 + date.day;
+              return _eventsCache[k] ?? <dynamic>[];
+            },
             selectedDayPredicate: (date) => isSameDay(selectedDay, date),
             firstDay: kFirstDay,
             lastDay: kLastDay,
@@ -169,12 +200,117 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                 color: lighterColor,
                 shape: BoxShape.circle,
               ),
-              markerDecoration: BoxDecoration(
-                color: lightColor,
-                shape: BoxShape.circle,
-              ),
-              markersMaxCount: 3,
+              // Disable the default small dot markers; we keep the outer outline
+              // ring drawn in the custom builders for days with events.
+              markerDecoration: const BoxDecoration(),
+              markersMaxCount: 0,
               canMarkersOverflow: true,
+            ),
+            // Custom builders so we can draw a light outline around each day
+            calendarBuilders: CalendarBuilders(
+              defaultBuilder: (context, date, _) {
+                final int k = date.year * 10000 + date.month * 100 + date.day;
+                final bool hasEvents = _eventsCache[k] != null && _eventsCache[k]!.isNotEmpty;
+                final Color accent = widget.color;
+                // Outer ring for event days to make it clearly visible across themes
+                return Center(
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (hasEvents)
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: accent.withOpacity(0.95), width: 2.4),
+                            ),
+                          ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(shape: BoxShape.circle),
+                          child: Text(
+                            '${date.day}',
+                            style: widget.dateStyle ?? const TextStyle(color: Color(0xFF5A5A5A)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              outsideBuilder: (context, date, _) {
+                final int k = date.year * 10000 + date.month * 100 + date.day;
+                final bool hasEvents = _eventsCache[k] != null && _eventsCache[k]!.isNotEmpty;
+                final Color accent = widget.color;
+                return Center(
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (hasEvents)
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: accent.withOpacity(0.7), width: 2.0),
+                            ),
+                          ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(shape: BoxShape.circle),
+                          child: Text(
+                            '${date.day}',
+                            style: (widget.inactiveDateStyle) ?? const TextStyle(color: Color(0xFF9E9E9E)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              todayBuilder: (context, date, _) => Center(
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: lighterColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: lighterColor.withOpacity(0.6)),
+                  ),
+                  child: Text(
+                    '${date.day}',
+                    style: const TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0).merge(widget.selectedDateStyle),
+                  ),
+                ),
+              ),
+              selectedBuilder: (context, date, _) => Center(
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withOpacity(0.9)),
+                  ),
+                  child: Text(
+                    '${date.day}',
+                    style: const TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0).merge(widget.selectedDateStyle),
+                  ),
+                ),
+              ),
             ),
             availableGestures: AvailableGestures.horizontalSwipe,
             startingDayOfWeek: startingDayOfWeek,

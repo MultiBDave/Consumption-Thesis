@@ -6,6 +6,8 @@ class Reminder {
   String title;
   String description;
   DateTime date;
+  DateTime? snoozedUntil;
+  DateTime? previousDate;
   String ownerUsername;
 
   Reminder({
@@ -14,6 +16,8 @@ class Reminder {
     required this.title,
     required this.description,
     required this.date,
+    this.snoozedUntil,
+    this.previousDate,
     required this.ownerUsername,
   });
 
@@ -24,6 +28,8 @@ class Reminder {
       'title': title,
       'description': description,
       'date': Timestamp.fromDate(date),
+      'snoozedUntil': snoozedUntil != null ? Timestamp.fromDate(snoozedUntil!) : null,
+      'previousDate': previousDate != null ? Timestamp.fromDate(previousDate!) : null,
       'ownerUsername': ownerUsername,
     };
   }
@@ -35,6 +41,8 @@ class Reminder {
       title: m['title'] ?? '',
       description: m['description'] ?? '',
       date: (m['date'] as Timestamp).toDate(),
+      snoozedUntil: m['snoozedUntil'] != null ? (m['snoozedUntil'] as Timestamp).toDate() : null,
+      previousDate: m['previousDate'] != null ? (m['previousDate'] as Timestamp).toDate() : null,
       ownerUsername: m['ownerUsername'] ?? '',
     );
   }

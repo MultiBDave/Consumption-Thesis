@@ -1,0 +1,71 @@
+@startuml
+!define TABLE(x) entity x
+
+title Consumption-Thesis - ER Diagram
+
+TABLE(CarEntry) {
+  * id : string
+  --
+  make : string
+  model : string
+  year : int
+  ownerUsername : string
+  drivenKm : double
+  active : boolean
+}
+
+TABLE(FuelEntry) {
+  * id : string
+  carId : string FK
+  date : datetime
+  liters : double
+  odometer : int
+  cost : double
+}
+
+TABLE(ServiceItem) {
+  * id : string
+  carId : string FK
+  name : string
+  lastKm : int
+  lastDate : datetime
+  intervalKm : int
+  intervalMonths : int
+}
+
+TABLE(Reminder) {
+  * id : string
+  carId : string FK
+  title : string
+  description : string
+  date : datetime
+  snoozedUntil : datetime
+  previousDate : datetime
+  ownerUsername : string
+}
+
+TABLE(ExtraCost) {
+  * id : string
+  carId : string FK
+  amount : double
+  date : datetime
+  category : string
+  description : string
+}
+
+CarEntry ||--o{ FuelEntry : "owns"
+CarEntry ||--o{ ServiceItem : "owns"
+CarEntry ||--o{ Reminder : "owns"
+CarEntry ||--o{ ExtraCost : "owns"
+ServiceItem ||--o{ Reminder : "can_create"
+
+note left of CarEntry
+Collections:
+- CarEntrys (collection)
+- FuelEntries (collection)
+- Services (collection)
+- Reminders (collection)
+- ExtraCosts (collection)
+end note
+
+@enduml
