@@ -226,7 +226,7 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                             height: 40,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: accent.withOpacity(0.95), width: 2.4),
+                              border: Border.all(color: accent.withAlpha((0.95 * 255).round()), width: 2.4),
                             ),
                           ),
                         Container(
@@ -261,7 +261,7 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                             height: 40,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: accent.withOpacity(0.7), width: 2.0),
+                              border: Border.all(color: accent.withAlpha((0.7 * 255).round()), width: 2.0),
                             ),
                           ),
                         Container(
@@ -284,10 +284,10 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                   width: 36,
                   height: 36,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                     color: lighterColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: lighterColor.withOpacity(0.6)),
+                    border: Border.all(color: lighterColor.withAlpha((0.6 * 255).round())),
                   ),
                   child: Text(
                     '${date.day}',
@@ -300,10 +300,10 @@ class _FlutterFlowCalendarState extends State<FlutterFlowCalendar> {
                   width: 36,
                   height: 36,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: color.withOpacity(0.9)),
+                    border: Border.all(color: color.withAlpha((0.9 * 255).round())),
                   ),
                   child: Text(
                     '${date.day}',

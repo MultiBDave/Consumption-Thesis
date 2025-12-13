@@ -49,17 +49,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
     _loadDetails();
   }
 
-  // Common maintenance presets (label, default km interval, default months interval)
-  final List<Map<String, dynamic>> _servicePresets = [
-    {'label': 'Oil change', 'km': 10000, 'months': 6},
-    {'label': 'Tyre rotation', 'km': 10000, 'months': 6},
-    {'label': 'Brake check / pads', 'km': 30000, 'months': 12},
-    {'label': 'Air filter', 'km': 20000, 'months': 12},
-    {'label': 'Timing belt', 'km': 100000, 'months': 60},
-    {'label': 'Battery check', 'km': 24000, 'months': 12},
-    {'label': 'Transmission service', 'km': 60000, 'months': 48},
-    {'label': 'Coolant change', 'km': 50000, 'months': 36},
-  ];
+  // (Presets removed — unused in current UI)
 
   @override
   void dispose() {
@@ -776,6 +766,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                                             ),
                                             ElevatedButton(
                                               onPressed: () async {
+                                                final messenger = ScaffoldMessenger.of(context);
                                                 s.lastKm = int.tryParse(lastKmCtrl.text) ?? s.lastKm;
                                                 s.intervalKm = int.tryParse(intKmCtrl.text) ?? s.intervalKm;
                                                 s.intervalMonths = int.tryParse(intMoCtrl.text) ?? s.intervalMonths;
@@ -796,7 +787,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                                                   }
                                                 }
                                                 if (!mounted) return;
-                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Service saved')));
+                                                messenger.showSnackBar(const SnackBar(content: Text('Service saved')));
                                                 setState(() {});
                                               },
                                               child: const Text('Save'),
@@ -804,7 +795,7 @@ class _CarDetailsScreenState extends State<CarDetailsScreen> {
                                           ],
                                         ),
                                       );
-                                    }).toList(),
+                                    }),
                                   ],
                                 ),
                               ),

@@ -28,7 +28,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
   bool isLoading = true;
 
   double get totalFuelCost {
-    return fuelEntries.fold(0.0, (s, e) => s + (e.cost));
+    return fuelEntries.fold(0.0, (total, e) => total + (e.cost));
   }
 
   @override
@@ -113,7 +113,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
       // Update the sum of fuel
       if (fuelEntries.isNotEmpty) {
         widget.car.fuelSum = fuelEntries
-            .fold(0, (sum, entry) => sum + entry.fuelAmount);
+          .fold(0, (total, entry) => total + entry.fuelAmount);
       } else {
         widget.car.fuelSum = 0;
       }
@@ -133,7 +133,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
     // After odometer update, check km-based service reminders and create reminders if thresholds reached
     try {
       final qs = await FirebaseFirestore.instance.collection('Services').where('carId', isEqualTo: widget.car.id).get();
-      final services = qs.docs.map((d) => ServiceItem.fromMap(d.data() as Map<String, dynamic>)).toList();
+      final services = qs.docs.map((d) => ServiceItem.fromMap(d.data())).toList();
       final existingReminders = await fb.loadRemindersForUser(widget.car.ownerUsername);
       for (var s in services) {
         if (s.intervalKm > 0) {
@@ -537,7 +537,7 @@ class _CarFuelEntriesScreenState extends State<CarFuelEntriesScreen> {
                             Icon(
                               Icons.local_gas_station_outlined,
                               size: 80,
-                              color: Colors.grey.withOpacity(0.5),
+                              color: Colors.grey.withAlpha((0.5 * 255).round()),
                             ),
                             const SizedBox(height: 16),
                             Text(

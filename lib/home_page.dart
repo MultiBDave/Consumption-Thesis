@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'helper/persistent_bottom_bar_scaffold.dart';
 import 'inner_screens/my_entries.dart';
@@ -13,7 +15,7 @@ class HomePage extends StatefulWidget {
 
   final List<Reminder>? overdueReminders;
 
-  HomePage({super.key, this.overdueReminders});
+  const HomePage({super.key, this.overdueReminders});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -69,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                         ? null
                         : () {
                             Navigator.of(context).pop();
-                            Navigator.of(this.context).push(MaterialPageRoute(builder: (ctx) => CarDetailsScreen(car: car, openServices: true)));
+                            Navigator.of(context, rootNavigator: true).push(MaterialPageRoute(builder: (ctx) => CarDetailsScreen(car: car, openServices: true)));
                           },
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -79,17 +81,18 @@ class _HomePageState extends State<HomePage> {
                           icon: const Icon(Icons.snooze),
                           tooltip: 'Snooze 7 days',
                           onPressed: () async {
-                            final now = DateTime.now();
-                            final newDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 7));
-                            // store previous date for undo if not already stored
-                            r.previousDate = r.previousDate ?? r.date;
-                            r.date = newDate;
-                            r.snoozedUntil = newDate;
-                            await fb.updateReminderInDb(r);
-                            setStateDialog(() {});
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Reminder snoozed 7 days')));
-                          },
+                              final messenger = ScaffoldMessenger.of(context);
+                              final now = DateTime.now();
+                              final newDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 7));
+                              // store previous date for undo if not already stored
+                              r.previousDate = r.previousDate ?? r.date;
+                              r.date = newDate;
+                              r.snoozedUntil = newDate;
+                              await fb.updateReminderInDb(r);
+                              setStateDialog(() {});
+                              if (!mounted) return;
+                              messenger.showSnackBar(const SnackBar(content: Text('Reminder snoozed 7 days')));
+                            },
                         ),
                         // Undo snooze if present
                         if (r.snoozedUntil != null)
@@ -97,6 +100,7 @@ class _HomePageState extends State<HomePage> {
                             icon: const Icon(Icons.undo),
                             tooltip: 'Undo snooze',
                             onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
                               // Restore previous date if available, otherwise set to today
                               final restored = r.previousDate ?? DateTime.now();
                               r.date = restored;
@@ -105,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                               await fb.updateReminderInDb(r);
                               setStateDialog(() {});
                               if (!mounted) return;
-                              ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Snooze undone')));
+                              messenger.showSnackBar(const SnackBar(content: Text('Snooze undone')));
                             },
                           ),
                       ],
@@ -118,6 +122,7 @@ class _HomePageState extends State<HomePage> {
               TextButton(
                 onPressed: () async {
                   // Reschedule all shown reminders to 7 days from now and set snoozedUntil
+                  final messenger = ScaffoldMessenger.of(context);
                   final now = DateTime.now();
                   final newDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 7));
                   for (var r in reminders) {
@@ -129,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                   }
                   if (!mounted) return;
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Reminders moved 7 days ahead')));
+                  messenger.showSnackBar(const SnackBar(content: Text('Reminders moved 7 days ahead')));
                 },
                 child: const Text('Later'),
               ),
